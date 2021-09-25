@@ -14,7 +14,7 @@ import { Random } from "./Random";
 import { Game } from "./Game";
 import { Person } from "./Entities/Person";
 
-function replacer(key, value) { // функция замены классов для преобразования в JSON
+export function replacer(key, value) { // функция замены классов для преобразования в JSON
     if (value instanceof Map) { // упаковка Map
         let val: any;
         if (value.get("JSONkeys") != undefined) { // гениальнейший костыль (нет)
@@ -249,6 +249,7 @@ export class Level {
         window.URL.revokeObjectURL(anchor.href);
         window.open(url);
     }
+    
     // Создание из прототипа
     public createFromPrototype(prototype: any) {
         this.Entities = [];

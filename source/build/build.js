@@ -1940,6 +1940,9 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                                     level.showLighting = true;
                                     level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
                                     Game.currentGame.levels[name] = level;
+                                    var newPrototype = prototype;
+                                    newPrototype.PathMatrix = new Map();
+                                    Game.currentGame.levelBackups[name] = JSON.stringify(newPrototype, Level_1.replacer);
                                 })];
                         case 1:
                             result = _a.sent();
@@ -1947,6 +1950,14 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                     }
                 });
             });
+        };
+        Game.prototype.reloadLevel = function (name) {
+            var prototype = JSON.parse(this.levelBackups[name], Game.reviver);
+            var level = new Level_1.Level();
+            level.createFromPrototype(prototype);
+            level.showLighting = true;
+            level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
+            Game.currentGame.levels[name] = level;
         };
         Game.prototype.makeBody = function (coordinates, radius) {
             var body = new Body_2.Body(coordinates, radius);
@@ -2030,7 +2041,12 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
             this.entities = [];
             this.triggers = [];
             this.mimic = new Mimic_1.Mimic(this);
-            Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
+            this.frags = 0;
+            if (this.levelBackups[this.currentLevelName] == undefined)
+                Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
+            else
+                this.reloadLevel(this.currentLevelName);
+            console.log(this.frags, this.entities.length, this.levelBackups[this.currentLevelName]);
             this.sounds.playcontinuously("soundtrack", 0.3);
             this.soundsarr.push(this.sounds);
         };
@@ -2244,7 +2260,7 @@ define("Entities/Entity", ["require", "exports", "Geom", "Entities/EntityAttribu
 define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGenerator", "Entities/Soldier", "Entities/Scientist", "Entities/Monster", "Entities/StationaryObject", "BehaviorModel", "AuxLib", "Queue", "Random", "Game"], function (require, exports, Tile_4, geom, Draw_12, PathGenerator_1, Soldier_2, Scientist_2, Monster_4, StationaryObject_3, BehaviorModel_3, aux, Queue_2, Random_2, Game_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Level = exports.LightSource = exports.LevelJSON = void 0;
+    exports.Level = exports.LightSource = exports.LevelJSON = exports.replacer = void 0;
     function replacer(key, value) {
         if (value instanceof Map) {
             var val = void 0;
@@ -2333,6 +2349,7 @@ define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGener
         }
         return value;
     }
+    exports.replacer = replacer;
     var LevelJSON = (function () {
         function LevelJSON() {
         }
@@ -3875,7 +3892,7 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
 define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_9, Editor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    aux.setEnvironment("https://raw.githubusercontent.com/bmstu-iu9/ptp2021-6-2d-game/master/source/env/");
+    aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/master/source/env/");
     var levelEditorMode = (document.getElementById("mode").innerHTML == "editor");
     aux.setEditorMode(levelEditorMode);
     var canvas = document.getElementById('gameCanvas');
@@ -3885,6 +3902,7 @@ define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"
     draw.cam.scale = 10;
     var game = new Game_9.Game(draw);
     game.levels = new Map();
+    game.levelBackups = new Map();
     Game_9.Game.currentGame = game;
     Game_9.Game.loadMap("map.json", "map");
     var x = false;

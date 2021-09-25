@@ -7,7 +7,7 @@ import { Control, Keys } from "./Control";
 import { Draw, Color, Layer } from "./Draw";
 import { Tile, CollisionType } from "./Tile";
 import { Mimic } from "./Mimic";
-import { Level, LightSource } from "./Level";
+import { Level, LightSource, replacer } from "./Level";
 import { Trigger } from "./Trigger";
 import { Debug } from "./Debug";
 import { Scientist } from "./Entities/Scientist";
@@ -26,6 +26,7 @@ export enum State {
 
 export class Game {
     public levels: Map<any, any>; // набор всех уровней каждый карта вызывается по своему названию
+    public levelBackups: Map<any, any>;
     public static dt = 0.02;
     public static currentGame: Game;
     public soundsarr: Sounds[] = [];
@@ -117,7 +118,19 @@ export class Game {
                 level.showLighting = true;
                 level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
                 Game.currentGame.levels[name] = level;
+                let newPrototype = prototype;
+                newPrototype.PathMatrix = new Map();
+                Game.currentGame.levelBackups[name] = JSON.stringify(newPrototype, replacer);
             });
+    }
+
+    public reloadLevel(name : string) {
+        let prototype = JSON.parse(this.levelBackups[name], Game.reviver);
+        let level = new Level();
+        level.createFromPrototype(prototype);
+        level.showLighting = true;
+        level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
+        Game.currentGame.levels[name] = level;
     }
 
     constructor(draw: Draw) {
@@ -224,8 +237,14 @@ export class Game {
         this.entities = [];
         this.triggers = [];
         this.mimic = new Mimic(this);
+        this.frags = 0;
         // TODO: перезапуск уровня
-        Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
+        if (this.levelBackups[this.currentLevelName] == undefined)
+            Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
+        else
+            this.reloadLevel(this.currentLevelName);
+        console.log(this.frags, this.entities.length, this.levelBackups[this.currentLevelName]);
+        
         this.sounds.playcontinuously("soundtrack", 0.3);
         this.soundsarr.push(this.sounds);
     }

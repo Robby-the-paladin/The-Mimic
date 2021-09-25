@@ -11,7 +11,7 @@ import { Behavior } from "./Entities/Person";
 import { Ray } from "./RayCasting";
 import { Verify } from "crypto";
 
-aux.setEnvironment("https://raw.githubusercontent.com/bmstu-iu9/ptp2021-6-2d-game/master/source/env/"); // Если с Гита
+aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/master/source/env/"); // Если с Гита
 //aux.setEnvironment("http://127.0.0.1:8000/"); // Если локальный сервер
 
 // Флаг режима редактора уровней
@@ -24,6 +24,7 @@ let draw = new Draw(canvas);
 draw.cam.scale = 10;
 let game = new Game(draw);
 game.levels = new Map();
+game.levelBackups = new Map();
 Game.currentGame = game;
 Game.loadMap("map.json", "map");
 let x = false;
