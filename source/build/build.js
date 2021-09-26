@@ -2654,6 +2654,35 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             this.cam.pos = this.cam.center;
             this.cam.scale = 1;
         };
+        Draw.prototype.drawText = function (text, pos, font, color, outline, outlineColor, align, baseline) {
+            if (font == undefined) {
+                font = "48px serif";
+            }
+            if (color == undefined) {
+                color = new Color(255, 255, 255);
+            }
+            if (outline == undefined) {
+                outline = false;
+            }
+            if (outlineColor == undefined) {
+                outlineColor = new Color(0, 0, 0);
+            }
+            if (align == undefined) {
+                align = "center";
+            }
+            if (baseline == undefined) {
+                baseline = "middle";
+            }
+            this.ctx.fillStyle = color.toString();
+            this.ctx.strokeStyle = outlineColor.toString();
+            this.ctx.fillStyle = color.toString();
+            this.ctx.font = font;
+            this.ctx.textAlign = align;
+            this.ctx.textBaseline = baseline;
+            this.ctx.fillText(text, pos.x, pos.y);
+            if (outline)
+                this.ctx.strokeText(text, pos.x, pos.y);
+        };
         Draw.prototype.drawimage = function (image, pos, box, angle, transparency) {
             var posNew = this.transform(pos);
             var boxNew = box.mul(this.cam.scale * 1.01);
@@ -3889,6 +3918,28 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
     }());
     exports.Editor = Editor;
 });
+define("Interactive", ["require", "exports", "Geom", "RayCasting"], function (require, exports, geom, RayCasting_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Interactive = void 0;
+    var Interactive = (function () {
+        function Interactive(entity, game, radius) {
+            this.radius = 1;
+            this.entity = entity;
+            this.game = game;
+        }
+        Interactive.prototype.isPointVisible = function (pos) {
+            return (geom.dist(this.entity.body.center, pos) <= this.radius
+                && !RayCasting_2.Ray.wallIntersection(this.entity.body.center, pos, this.game));
+        };
+        Interactive.prototype.step = function () {
+            if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
+            }
+        };
+        return Interactive;
+    }());
+    exports.Interactive = Interactive;
+});
 define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_9, Editor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3907,6 +3958,7 @@ define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"
     Game_9.Game.loadMap("map.json", "map");
     var x = false;
     var t = 0;
+    draw.drawText("Hello world!", new geom.Vector(100, 100), undefined, undefined, true, new Draw_17.Color(255, 0, 0));
     function step() {
         if (game.levels["map"] != undefined) {
             t++;

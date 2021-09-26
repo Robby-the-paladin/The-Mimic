@@ -1,6 +1,6 @@
 import * as geom from "./Geom";
 import * as aux from "./AuxLib";
-import { Draw } from "./Draw";
+import { Color, Draw } from "./Draw";
 import { Game } from "./Game";
 import { Level, LightSource } from "./Level";
 import { Editor } from "./Editor";

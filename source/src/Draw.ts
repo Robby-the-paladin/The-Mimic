@@ -122,6 +122,37 @@ export class Draw {
         this.cam.pos = this.cam.center;
         this.cam.scale = 1;
     }
+
+    public drawText(text: string, pos: geom.Vector, font?: string, color?: Color, outline?: boolean, outlineColor?: Color,
+        align?: CanvasTextAlign, baseline?: CanvasTextBaseline) {
+        if (font == undefined) {
+            font = "48px serif";
+        } 
+        if (color == undefined) {
+            color = new Color(255, 255, 255);
+        }
+        if (outline == undefined) {
+            outline = false;
+        }
+        if (outlineColor == undefined) {
+            outlineColor = new Color(0, 0, 0);
+        }
+        if (align == undefined) {
+            align = "center";
+        }
+        if (baseline == undefined) {
+            baseline = "middle";
+        }
+        this.ctx.fillStyle = color.toString();
+        this.ctx.strokeStyle = outlineColor.toString();
+        this.ctx.fillStyle = color.toString();
+        this.ctx.font = font;
+        this.ctx.textAlign = align;
+        this.ctx.textBaseline = baseline;
+        this.ctx.fillText(text, pos.x, pos.y);
+        if (outline)
+            this.ctx.strokeText(text, pos.x, pos.y);
+    }
     // Функция для отрисовки изображения
     public drawimage(image: HTMLImageElement, pos: geom.Vector, box: geom.Vector, angle: number, transparency: number) {
         let posNew = this.transform(pos);
