@@ -10,7 +10,7 @@ export enum Keys {
 }
 
 export class Control {
-    private static keyMapping: Map<number, string[]>;
+    private static keyMapping: Map<string, string[]>;
     private static _keys: boolean[] = [];
     private static clicked = false;
     private static mouseLeftPressed = false;
@@ -19,6 +19,7 @@ export class Control {
     private static mouseWheelDelta = 0;
     private static commandsCounter: Map<string, number>;
     public static commands: Commands;
+    public static commandKeys: Map<string, string>;
 
     private static async readTextFile(path) {
         const response = await fetch(path);
@@ -27,7 +28,7 @@ export class Control {
     }
 
     public static async loadConfig(path: string) {
-        if (localStorage.getItem("commands") == undefined) {
+        if (true || localStorage.getItem("commands") == undefined) {
             let result = await this.readTextFile(aux.environment + path)
                 .then(result => {
                     Control.keyMapping = JSON.parse(result, aux.reviver);
@@ -35,20 +36,24 @@ export class Control {
                 })
                 .then(result => {
                     let vals = Array.from(Control.keyMapping.values());
+                    let mapKeys = Array.from(Control.keyMapping.keys());
                     for (let i = 0; i < vals.length; i++) {
                         for (let j = 0; j < vals[i].length; j++) {
                             Control.commands.active[vals[i][j]] = false;
                             Control.commandsCounter[vals[i][j]] = 0;
+                            Control.commandKeys[vals[i][j]] = mapKeys[i];
                         }
                     }
                 });
         } else {
             Control.keyMapping = JSON.parse(localStorage.getItem("commands"), aux.reviver);
             let vals = Array.from(Control.keyMapping.values());
+            let mapKeys = Array.from(Control.keyMapping.keys());
             for (let i = 0; i < vals.length; i++) {
                 for (let j = 0; j < vals[i].length; j++) {
                     Control.commands.active[vals[i][j]] = false;
                     Control.commandsCounter[vals[i][j]] = 0;
+                    Control.commandKeys[vals[i][j]] = mapKeys[i];
                 }
             }
         }
@@ -70,9 +75,10 @@ export class Control {
         window.addEventListener("mouseup", Control.onMouseUp);
         // Блокировка контекстного меню по ПКМ
         window.addEventListener("contextmenu", e => e.preventDefault());
-        Control.keyMapping = new Map<number, string[]>();
+        Control.keyMapping = new Map<string, string[]>();
         Control.commandsCounter = new Map<string, number>();
         Control.commands = new Commands();
+        Control.commandKeys = new Map<string, string>();
         Control.loadConfig("keys.json");
 
     }
@@ -114,12 +120,12 @@ export class Control {
     }
 
     private static onKeyDown(event: KeyboardEvent): boolean {
-        if (Control.keyMapping != undefined && Control._keys[event.keyCode] == false) {
-            if (Control.keyMapping.get(event.keyCode) == undefined) {
-                Control.keyMapping.set(event.keyCode, []);
+        if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
+            if (Control.keyMapping.get(event.key) == undefined) {
+                Control.keyMapping.set(event.key, []);
             }
-            for (let i = 0; i < Control.keyMapping.get(event.keyCode).length; i++) {
-                let currentCommand = Control.keyMapping.get(event.keyCode)[i];
+            for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                let currentCommand = Control.keyMapping.get(event.key)[i];
                 Control.commandsCounter[currentCommand]++;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
@@ -131,17 +137,17 @@ export class Control {
     }
 
     private static onKeyUp(event: KeyboardEvent): boolean {
-        if (Control.keyMapping != undefined && Control._keys[event.keyCode] == true) {
-            if (Control.keyMapping.get(event.keyCode) == undefined) {
-                Control.keyMapping.set(event.keyCode, []);
+        if (Control.keyMapping != undefined && Control._keys[event.key] == true) {
+            if (Control.keyMapping.get(event.key) == undefined) {
+                Control.keyMapping.set(event.key, []);
             }
-            for (let i = 0; i < Control.keyMapping.get(event.keyCode).length; i++) {
-                let currentCommand = Control.keyMapping.get(event.keyCode)[i];
+            for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                let currentCommand = Control.keyMapping.get(event.key)[i];
                 Control.commandsCounter[currentCommand]--;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
-        Control._keys[event.keyCode] = false;
+        Control._keys[event.key] = false;
         event.preventDefault();
         event.stopPropagation();
         return false;

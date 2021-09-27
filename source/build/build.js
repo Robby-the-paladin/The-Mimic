@@ -178,11 +178,11 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
         };
         Control.loadConfig = function (path) {
             return __awaiter(this, void 0, void 0, function () {
-                var result, vals, i, j;
+                var result, vals, mapKeys, i, j;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!(localStorage.getItem("commands") == undefined)) return [3, 2];
+                            if (!(true || localStorage.getItem("commands") == undefined)) return [3, 2];
                             return [4, this.readTextFile(aux.environment + path)
                                     .then(function (result) {
                                     Control.keyMapping = JSON.parse(result, aux.reviver);
@@ -190,10 +190,12 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
                                 })
                                     .then(function (result) {
                                     var vals = Array.from(Control.keyMapping.values());
+                                    var mapKeys = Array.from(Control.keyMapping.keys());
                                     for (var i = 0; i < vals.length; i++) {
                                         for (var j = 0; j < vals[i].length; j++) {
                                             Control.commands.active[vals[i][j]] = false;
                                             Control.commandsCounter[vals[i][j]] = 0;
+                                            Control.commandKeys[vals[i][j]] = mapKeys[i];
                                         }
                                     }
                                 })];
@@ -203,10 +205,12 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
                         case 2:
                             Control.keyMapping = JSON.parse(localStorage.getItem("commands"), aux.reviver);
                             vals = Array.from(Control.keyMapping.values());
+                            mapKeys = Array.from(Control.keyMapping.keys());
                             for (i = 0; i < vals.length; i++) {
                                 for (j = 0; j < vals[i].length; j++) {
                                     Control.commands.active[vals[i][j]] = false;
                                     Control.commandsCounter[vals[i][j]] = 0;
+                                    Control.commandKeys[vals[i][j]] = mapKeys[i];
                                 }
                             }
                             _a.label = 3;
@@ -233,6 +237,7 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
             Control.keyMapping = new Map();
             Control.commandsCounter = new Map();
             Control.commands = new Commands_1.Commands();
+            Control.commandKeys = new Map();
             Control.loadConfig("keys.json");
         };
         Control.isKeyDown = function (key) {
@@ -264,12 +269,12 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
             return Control.mouseRightPressed;
         };
         Control.onKeyDown = function (event) {
-            if (Control.keyMapping != undefined && Control._keys[event.keyCode] == false) {
-                if (Control.keyMapping.get(event.keyCode) == undefined) {
-                    Control.keyMapping.set(event.keyCode, []);
+            if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
+                if (Control.keyMapping.get(event.key) == undefined) {
+                    Control.keyMapping.set(event.key, []);
                 }
-                for (var i = 0; i < Control.keyMapping.get(event.keyCode).length; i++) {
-                    var currentCommand = Control.keyMapping.get(event.keyCode)[i];
+                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                    var currentCommand = Control.keyMapping.get(event.key)[i];
                     Control.commandsCounter[currentCommand]++;
                     Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
                 }
@@ -280,17 +285,17 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
             return false;
         };
         Control.onKeyUp = function (event) {
-            if (Control.keyMapping != undefined && Control._keys[event.keyCode] == true) {
-                if (Control.keyMapping.get(event.keyCode) == undefined) {
-                    Control.keyMapping.set(event.keyCode, []);
+            if (Control.keyMapping != undefined && Control._keys[event.key] == true) {
+                if (Control.keyMapping.get(event.key) == undefined) {
+                    Control.keyMapping.set(event.key, []);
                 }
-                for (var i = 0; i < Control.keyMapping.get(event.keyCode).length; i++) {
-                    var currentCommand = Control.keyMapping.get(event.keyCode)[i];
+                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                    var currentCommand = Control.keyMapping.get(event.key)[i];
                     Control.commandsCounter[currentCommand]--;
                     Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
                 }
             }
-            Control._keys[event.keyCode] = false;
+            Control._keys[event.key] = false;
             event.preventDefault();
             event.stopPropagation();
             return false;
@@ -3923,7 +3928,9 @@ define("Interactive", ["require", "exports", "Geom", "RayCasting"], function (re
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Interactive = void 0;
     var Interactive = (function () {
-        function Interactive(entity, game, radius) {
+        function Interactive(entity, game, radius, text) {
+            if (radius === void 0) { radius = 1; }
+            if (text === void 0) { text = "activate"; }
             this.radius = 1;
             this.entity = entity;
             this.game = game;
@@ -3943,7 +3950,7 @@ define("Interactive", ["require", "exports", "Geom", "RayCasting"], function (re
 define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_9, Editor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/master/source/env/");
+    aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/");
     var levelEditorMode = (document.getElementById("mode").innerHTML == "editor");
     aux.setEditorMode(levelEditorMode);
     var canvas = document.getElementById('gameCanvas');
@@ -3958,9 +3965,9 @@ define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"
     Game_9.Game.loadMap("map.json", "map");
     var x = false;
     var t = 0;
-    draw.drawText("Hello world!", new geom.Vector(100, 100), undefined, undefined, true, new Draw_17.Color(255, 0, 0));
     function step() {
         if (game.levels["map"] != undefined) {
+            console.log();
             t++;
             if (x == false) {
                 console.log(game.levels["map"]);

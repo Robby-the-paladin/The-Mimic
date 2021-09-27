@@ -8,7 +8,7 @@ export class Interactive {
     public entity : Entity;
     public game : Game;
     public radius : number = 1;
-    public text
+    public text: string;
 
     private isPointVisible(pos: geom.Vector): boolean {
         return (geom.dist(this.entity.body.center, pos) <= this.radius
@@ -22,7 +22,7 @@ export class Interactive {
 
     public step() {
         if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
-            //this.game.draw.drawText("Press " + Control.)
+            //this.game.draw.drawText("Press " + )
         }
     }
 }

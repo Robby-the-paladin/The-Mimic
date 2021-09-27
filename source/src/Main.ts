@@ -11,7 +11,7 @@ import { Behavior } from "./Entities/Person";
 import { Ray } from "./RayCasting";
 import { Verify } from "crypto";
 
-aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/master/source/env/"); // Если с Гита
+aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/"); // Если с Гита
 //aux.setEnvironment("http://127.0.0.1:8000/"); // Если локальный сервер
 
 // Флаг режима редактора уровней
@@ -33,6 +33,8 @@ let t = 0;
 // В случае если режим игры
 function step() {
     if (game.levels["map"] != undefined) {
+        console.log();
+        
         t++;
         if (x == false) {
             console.log(game.levels["map"]);
