@@ -137,7 +137,6 @@ export class Game {
     }
 
     constructor(draw: Draw) {
-        console.log("im here!!");
         Control.init();
         this.draw = draw;
         this.currentLevel.Grid = [];
@@ -246,7 +245,6 @@ export class Game {
             Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
         else
             this.reloadLevel(this.currentLevelName);
-        console.log(this.frags, this.entities.length, this.levelBackups[this.currentLevelName]);
         
         this.sounds.playcontinuously("soundtrack", 0.3);
         this.soundsarr.push(this.sounds);

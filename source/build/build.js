@@ -506,7 +506,6 @@ define("Entities/EntityAttributes/AI", ["require", "exports", "Geom", "Entities/
         };
         AI.prototype.goToPoint = function (point) {
             var pathMatrix = this.game.levels[this.game.currentLevelName].PathMatrix;
-            console.log(pathMatrix);
             this.destination = point;
             this.Path = [];
             var startMeshPoint = this.chooseMeshPoint(this.body.center);
@@ -816,7 +815,6 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
             return Control.mouseRightPressed;
         };
         Control.onKeyDown = function (event) {
-            console.log(event.code, event, Control.commandsCounter, Control.keyMapping.get(event.code));
             if (Control._keys[event.code] == undefined) {
                 Control._keys[event.code] = false;
             }
@@ -1883,7 +1881,6 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
             this.state = State.Waiting;
             this.sounds = new Sounds_5.Sounds(0.01);
             this.frags = 0;
-            console.log("im here!!");
             Control_3.Control.init();
             this.draw = draw;
             this.currentLevel.Grid = [];
@@ -2085,7 +2082,6 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                 Game.loadMap(Game.levelPaths[this.currentLevelName], this.currentLevelName);
             else
                 this.reloadLevel(this.currentLevelName);
-            console.log(this.frags, this.entities.length, this.levelBackups[this.currentLevelName]);
             this.sounds.playcontinuously("soundtrack", 0.3);
             this.soundsarr.push(this.sounds);
         };

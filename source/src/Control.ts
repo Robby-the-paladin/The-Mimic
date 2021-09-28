@@ -110,7 +110,6 @@ export class Control {
     }
 
     private static onKeyDown(event: KeyboardEvent): boolean {
-        console.log(event.code, event, Control.commandsCounter, Control.keyMapping.get(event.code));
         if (Control._keys[event.code] == undefined) {
             Control._keys[event.code] = false;
         }
