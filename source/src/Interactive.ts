@@ -5,6 +5,7 @@ import * as geom from "./Geom";
 import { Ray } from "./RayCasting";
 
 export class Interactive {
+    private toggled = true;
     public entity : Entity;
     public game : Game;
     public radius : number = 1;
@@ -29,9 +30,12 @@ export class Interactive {
         if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
             this.game.draw.text("Press " + Control.commandKeys["action"] + " to " + this.text, 
             new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
-            if (Control.commands["action"]) {
+            if (Control.commands.active["action"] && this.toggled) {
+                this.toggled = false
                 console.log("func?");
                 this.func();
+            } else {
+                this.toggled = true;
             }
         }
     }

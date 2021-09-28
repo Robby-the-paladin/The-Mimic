@@ -34,7 +34,11 @@ export class Control {
                         for (let j = 0; j < vals[i].length; j++) {
                             Control.commands.active[vals[i][j]] = false;
                             Control.commandsCounter[vals[i][j]] = 0;
-                            Control.commandKeys[vals[i][j]] = mapKeys[i];
+                            if (mapKeys[i].length == 4 && mapKeys[i].slice(0, 3) == "Key") {
+                                Control.commandKeys[vals[i][j]] = mapKeys[i].slice(3);
+                            } else {
+                                Control.commandKeys[vals[i][j]] = mapKeys[i];
+                            }
                         }
                     }
                 });
@@ -106,39 +110,39 @@ export class Control {
     }
 
     private static onKeyDown(event: KeyboardEvent): boolean {
-        console.log(event.key);
-        if (Control._keys[event.key] == undefined) {
-            Control._keys[event.key] = false;
+        console.log(event.code, event, Control.commandsCounter, Control.keyMapping.get(event.code));
+        if (Control._keys[event.code] == undefined) {
+            Control._keys[event.code] = false;
         }
         
-        if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
-            if (Control.keyMapping.get(event.key) == undefined) {
-                Control.keyMapping.set(event.key, []);
+        if (Control.keyMapping != undefined && Control._keys[event.code] == false) {
+            if (Control.keyMapping.get(event.code) == undefined) {
+                Control.keyMapping.set(event.code, []);
             }
-            for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
-                let currentCommand = Control.keyMapping.get(event.key)[i];
+            for (let i = 0; i < Control.keyMapping.get(event.code).length; i++) {
+                let currentCommand = Control.keyMapping.get(event.code)[i];
                 Control.commandsCounter[currentCommand] += 1;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
-        Control._keys[event.key] = true;
+        Control._keys[event.code] = true;
         event.preventDefault();
         event.stopPropagation();
         return false;
     }
 
     private static onKeyUp(event: KeyboardEvent): boolean {
-        if (Control.keyMapping != undefined && Control._keys[event.key] == true) {
-            if (Control.keyMapping.get(event.key) == undefined) {
-                Control.keyMapping.set(event.key, []);
+        if (Control.keyMapping != undefined && Control._keys[event.code] == true) {
+            if (Control.keyMapping.get(event.code) == undefined) {
+                Control.keyMapping.set(event.code, []);
             }
-            for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
-                let currentCommand = Control.keyMapping.get(event.key)[i];
+            for (let i = 0; i < Control.keyMapping.get(event.code).length; i++) {
+                let currentCommand = Control.keyMapping.get(event.code)[i];
                 Control.commandsCounter[currentCommand] -= 1;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
-        Control._keys[event.key] = false;
+        Control._keys[event.code] = false;
         event.preventDefault();
         event.stopPropagation();
         return false;
