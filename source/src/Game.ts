@@ -133,12 +133,7 @@ export class Game {
     }
 
     public reloadLevel(name : string) {
-        let prototype = JSON.parse(this.levelBackups[name], Game.reviver);
-        let level = new Level();
-        level.createFromPrototype(prototype);
-        level.showLighting = true;
-        level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
-        Game.currentGame.levels[name] = level;
+        JSON.parse(this.levelBackups[name], Game.reviver);
     }
 
     constructor(draw: Draw) {

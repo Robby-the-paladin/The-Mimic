@@ -506,6 +506,7 @@ define("Entities/EntityAttributes/AI", ["require", "exports", "Geom", "Entities/
         };
         AI.prototype.goToPoint = function (point) {
             var pathMatrix = this.game.levels[this.game.currentLevelName].PathMatrix;
+            console.log(pathMatrix);
             this.destination = point;
             this.Path = [];
             var startMeshPoint = this.chooseMeshPoint(this.body.center);
@@ -1995,12 +1996,7 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
             });
         };
         Game.prototype.reloadLevel = function (name) {
-            var prototype = JSON.parse(this.levelBackups[name], Game.reviver);
-            var level = new Level_1.Level();
-            level.createFromPrototype(prototype);
-            level.showLighting = true;
-            level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
-            Game.currentGame.levels[name] = level;
+            JSON.parse(this.levelBackups[name], Game.reviver);
         };
         Game.prototype.makeBody = function (coordinates, radius) {
             var body = new Body_2.Body(coordinates, radius);

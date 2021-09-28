@@ -88,8 +88,10 @@ export class AI {
         return answer;
     }
 
-    public goToPoint(point: geom.Vector) { // функция, прокладывающая путь до точки
+    public goToPoint(point: geom.Vector) { // функция, прокладывающая путь до точки        
         let pathMatrix = this.game.levels[this.game.currentLevelName].PathMatrix;
+        console.log(pathMatrix);
+        
         this.destination = point;
         this.Path = [];
         let startMeshPoint = this.chooseMeshPoint(this.body.center);
