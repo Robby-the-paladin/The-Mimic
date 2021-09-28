@@ -2,16 +2,9 @@ import * as geom from "./Geom";
 import * as aux from "./AuxLib";
 import { Commands } from "./Entities/EntityAttributes/Commands";
 
-export enum Keys {
-    LeftArrow = 37,
-    UpArrow = 38,
-    RightArrow = 39,
-    DownArrow = 40
-}
-
 export class Control {
     private static keyMapping: Map<string, string[]>;
-    private static _keys: boolean[] = [];
+    private static _keys: Map<string, boolean> = new Map();
     private static clicked = false;
     private static mouseLeftPressed = false;
     private static mouseRightPressed = false;
@@ -28,7 +21,7 @@ export class Control {
     }
 
     public static async loadConfig(path: string) {
-        if (true || localStorage.getItem("commands") == undefined) {
+        if (localStorage.getItem("commands") == undefined) {
             let result = await this.readTextFile(aux.environment + path)
                 .then(result => {
                     Control.keyMapping = JSON.parse(result, aux.reviver);
@@ -60,9 +53,6 @@ export class Control {
     }
 
     public static init(): void {
-        for (let i = 0; i < 256; i++) {
-            Control._keys[i] = false;
-        }
         let canvas = document.getElementById("gameCanvas");
         if (!aux.editorMode) {
             window.addEventListener("keydown", Control.onKeyDown);
@@ -81,10 +71,6 @@ export class Control {
         Control.commandKeys = new Map<string, string>();
         Control.loadConfig("keys.json");
 
-    }
-
-    public static isKeyDown(key: Keys): boolean {
-        return Control._keys[key];
     }
 
     public static isMouseClicked(): boolean {
@@ -120,17 +106,21 @@ export class Control {
     }
 
     private static onKeyDown(event: KeyboardEvent): boolean {
+        if (Control._keys[event.key] == undefined) {
+            Control._keys[event.key] = false;
+        }
+        
         if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
             if (Control.keyMapping.get(event.key) == undefined) {
                 Control.keyMapping.set(event.key, []);
             }
             for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                 let currentCommand = Control.keyMapping.get(event.key)[i];
-                Control.commandsCounter[currentCommand]++;
+                Control.commandsCounter[currentCommand] = 1;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
-        Control._keys[event.keyCode] = true;
+        Control._keys[event.key] = true;
         event.preventDefault();
         event.stopPropagation();
         return false;
@@ -143,7 +133,7 @@ export class Control {
             }
             for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                 let currentCommand = Control.keyMapping.get(event.key)[i];
-                Control.commandsCounter[currentCommand]--;
+                Control.commandsCounter[currentCommand] = 0;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }

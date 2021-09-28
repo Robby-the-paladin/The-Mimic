@@ -133,212 +133,6 @@ define("Geom", ["require", "exports"], function (require, exports) {
     }
     exports.dist = dist;
 });
-define("Entities/EntityAttributes/Commands", ["require", "exports", "Geom"], function (require, exports, Geom_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Commands = void 0;
-    var Commands = (function () {
-        function Commands() {
-            this.active = new Map();
-            this.pointer = new Geom_1.Vector();
-        }
-        return Commands;
-    }());
-    exports.Commands = Commands;
-});
-define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Commands"], function (require, exports, geom, aux, Commands_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Control = exports.Keys = void 0;
-    var Keys;
-    (function (Keys) {
-        Keys[Keys["LeftArrow"] = 37] = "LeftArrow";
-        Keys[Keys["UpArrow"] = 38] = "UpArrow";
-        Keys[Keys["RightArrow"] = 39] = "RightArrow";
-        Keys[Keys["DownArrow"] = 40] = "DownArrow";
-    })(Keys = exports.Keys || (exports.Keys = {}));
-    var Control = (function () {
-        function Control() {
-        }
-        Control.readTextFile = function (path) {
-            return __awaiter(this, void 0, void 0, function () {
-                var response, text;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4, fetch(path)];
-                        case 1:
-                            response = _a.sent();
-                            return [4, response.text()];
-                        case 2:
-                            text = _a.sent();
-                            return [2, text];
-                    }
-                });
-            });
-        };
-        Control.loadConfig = function (path) {
-            return __awaiter(this, void 0, void 0, function () {
-                var result, vals, mapKeys, i, j;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (!(true || localStorage.getItem("commands") == undefined)) return [3, 2];
-                            return [4, this.readTextFile(aux.environment + path)
-                                    .then(function (result) {
-                                    Control.keyMapping = JSON.parse(result, aux.reviver);
-                                    localStorage.setItem("commands", result);
-                                })
-                                    .then(function (result) {
-                                    var vals = Array.from(Control.keyMapping.values());
-                                    var mapKeys = Array.from(Control.keyMapping.keys());
-                                    for (var i = 0; i < vals.length; i++) {
-                                        for (var j = 0; j < vals[i].length; j++) {
-                                            Control.commands.active[vals[i][j]] = false;
-                                            Control.commandsCounter[vals[i][j]] = 0;
-                                            Control.commandKeys[vals[i][j]] = mapKeys[i];
-                                        }
-                                    }
-                                })];
-                        case 1:
-                            result = _a.sent();
-                            return [3, 3];
-                        case 2:
-                            Control.keyMapping = JSON.parse(localStorage.getItem("commands"), aux.reviver);
-                            vals = Array.from(Control.keyMapping.values());
-                            mapKeys = Array.from(Control.keyMapping.keys());
-                            for (i = 0; i < vals.length; i++) {
-                                for (j = 0; j < vals[i].length; j++) {
-                                    Control.commands.active[vals[i][j]] = false;
-                                    Control.commandsCounter[vals[i][j]] = 0;
-                                    Control.commandKeys[vals[i][j]] = mapKeys[i];
-                                }
-                            }
-                            _a.label = 3;
-                        case 3: return [2];
-                    }
-                });
-            });
-        };
-        Control.init = function () {
-            for (var i = 0; i < 256; i++) {
-                Control._keys[i] = false;
-            }
-            var canvas = document.getElementById("gameCanvas");
-            if (!aux.editorMode) {
-                window.addEventListener("keydown", Control.onKeyDown);
-                window.addEventListener("keyup", Control.onKeyUp);
-            }
-            canvas.addEventListener("click", Control.onClick);
-            window.addEventListener("wheel", Control.onWheel);
-            window.addEventListener("mousemove", Control.onMouseMove);
-            window.addEventListener("mousedown", Control.onMouseDown);
-            window.addEventListener("mouseup", Control.onMouseUp);
-            window.addEventListener("contextmenu", function (e) { return e.preventDefault(); });
-            Control.keyMapping = new Map();
-            Control.commandsCounter = new Map();
-            Control.commands = new Commands_1.Commands();
-            Control.commandKeys = new Map();
-            Control.loadConfig("keys.json");
-        };
-        Control.isKeyDown = function (key) {
-            return Control._keys[key];
-        };
-        Control.isMouseClicked = function () {
-            return Control.clicked;
-        };
-        Control.lastMouseCoordinates = function () {
-            Control.clicked = false;
-            return Control.commands.pointer.clone();
-        };
-        Control.wheelDelta = function () {
-            var delta = this.mouseWheelDelta;
-            this.mouseWheelDelta = 0;
-            return delta;
-        };
-        Control.clearWheelDelta = function () {
-            this.mouseWheelDelta = 0;
-        };
-        Control.mousePos = function () {
-            var canvas = document.getElementById("gameCanvas");
-            return this.currentMousePos.sub(new geom.Vector(canvas.offsetLeft, canvas.offsetTop));
-        };
-        Control.isMouseLeftPressed = function () {
-            return Control.mouseLeftPressed;
-        };
-        Control.isMouseRightPressed = function () {
-            return Control.mouseRightPressed;
-        };
-        Control.onKeyDown = function (event) {
-            if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
-                if (Control.keyMapping.get(event.key) == undefined) {
-                    Control.keyMapping.set(event.key, []);
-                }
-                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
-                    var currentCommand = Control.keyMapping.get(event.key)[i];
-                    Control.commandsCounter[currentCommand]++;
-                    Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
-                }
-            }
-            Control._keys[event.keyCode] = true;
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
-        };
-        Control.onKeyUp = function (event) {
-            if (Control.keyMapping != undefined && Control._keys[event.key] == true) {
-                if (Control.keyMapping.get(event.key) == undefined) {
-                    Control.keyMapping.set(event.key, []);
-                }
-                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
-                    var currentCommand = Control.keyMapping.get(event.key)[i];
-                    Control.commandsCounter[currentCommand]--;
-                    Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
-                }
-            }
-            Control._keys[event.key] = false;
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
-        };
-        Control.onClick = function (event) {
-            Control.clicked = true;
-            Control.commands.pointer = new geom.Vector(event.x, event.y);
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
-        };
-        Control.onMouseDown = function (event) {
-            if (event.button == 0)
-                Control.mouseLeftPressed = true;
-            if (event.button == 2)
-                Control.mouseRightPressed = true;
-            return false;
-        };
-        Control.onMouseUp = function (event) {
-            if (event.button == 0)
-                Control.mouseLeftPressed = false;
-            if (event.button == 2)
-                Control.mouseRightPressed = false;
-            return false;
-        };
-        Control.onWheel = function (event) {
-            Control.mouseWheelDelta = event.deltaY;
-            return false;
-        };
-        Control.onMouseMove = function (event) {
-            Control.currentMousePos = new geom.Vector(event.x, event.y);
-            return false;
-        };
-        Control._keys = [];
-        Control.clicked = false;
-        Control.mouseLeftPressed = false;
-        Control.mouseRightPressed = false;
-        Control.currentMousePos = new geom.Vector();
-        Control.mouseWheelDelta = 0;
-        return Control;
-    }());
-    exports.Control = Control;
-});
 define("Tile", ["require", "exports", "Draw"], function (require, exports, Draw_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -424,7 +218,7 @@ define("Queue", ["require", "exports"], function (require, exports) {
     }());
     exports.Queue = Queue;
 });
-define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "AuxLib"], function (require, exports, Geom_2, Queue_1, Tile_1, aux) {
+define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "AuxLib"], function (require, exports, Geom_1, Queue_1, Tile_1, aux) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PathGenerator = void 0;
@@ -489,16 +283,16 @@ define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "
                 if (place.x + i < 0 || place.x + i >= collisionMesh.length || i == 0) {
                     continue;
                 }
-                if (collisionMesh[place.x + i][place.y] == false && !was[JSON.stringify(new Geom_2.Vector(place.x + i, place.y))]) {
-                    vertices.push(new Geom_2.Vector(place.x + i, place.y));
+                if (collisionMesh[place.x + i][place.y] == false && !was[JSON.stringify(new Geom_1.Vector(place.x + i, place.y))]) {
+                    vertices.push(new Geom_1.Vector(place.x + i, place.y));
                 }
             }
             for (var i = -1; i <= 1; i++) {
                 if (place.y + i < 0 || place.y + i >= collisionMesh[place.x].length || i == 0) {
                     continue;
                 }
-                if (collisionMesh[place.x][place.y + i] == false && !was[JSON.stringify(new Geom_2.Vector(place.x, place.y + i))]) {
-                    vertices.push(new Geom_2.Vector(place.x, place.y + i));
+                if (collisionMesh[place.x][place.y + i] == false && !was[JSON.stringify(new Geom_1.Vector(place.x, place.y + i))]) {
+                    vertices.push(new Geom_1.Vector(place.x, place.y + i));
                 }
             }
             for (var i = -1; i <= 1; i++) {
@@ -512,8 +306,8 @@ define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "
                     if (place.y + j < 0 || place.y + j >= collisionMesh[place.x + i].length) {
                         continue;
                     }
-                    if (collisionMesh[place.x + i][place.y + j] == false && was[JSON.stringify(new Geom_2.Vector(place.x + i, place.y + j))] == false) {
-                        vertices.push(new Geom_2.Vector(place.x + i, place.y + j));
+                    if (collisionMesh[place.x + i][place.y + j] == false && was[JSON.stringify(new Geom_1.Vector(place.x + i, place.y + j))] == false) {
+                        vertices.push(new Geom_1.Vector(place.x + i, place.y + j));
                     }
                 }
             }
@@ -525,7 +319,7 @@ define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "
                 for (var j = 0; j < collisionMesh[i].length; j++) {
                     var queue = new Queue_1.Queue();
                     var was = new Map;
-                    var curPlace = new Geom_2.Vector(i, j);
+                    var curPlace = new Geom_1.Vector(i, j);
                     queue.push(curPlace);
                     was[JSON.stringify(curPlace)] = true;
                     while (queue.length() != 0) {
@@ -570,7 +364,7 @@ define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "
             for (var i = 0; i < collisionMap.length; i++) {
                 for (var j = 0; j < collisionMap[i].length; j++) {
                     console.log(i, j, collisionMap[i][j], i * 2 + 1, j * 2 + 1);
-                    this.fillTile(collisionMesh, collisionMap[i][j], new Geom_2.Vector(j * 2 + 1, i * 2 + 1));
+                    this.fillTile(collisionMesh, collisionMap[i][j], new Geom_1.Vector(j * 2 + 1, i * 2 + 1));
                 }
             }
             for (var i = 0; i < collisionMesh.length; i++) {
@@ -593,7 +387,7 @@ define("Editor/PathGenerator", ["require", "exports", "Geom", "Queue", "Tile", "
     }());
     exports.PathGenerator = PathGenerator;
 });
-define("Debug", ["require", "exports", "Geom"], function (require, exports, Geom_3) {
+define("Debug", ["require", "exports", "Geom"], function (require, exports, Geom_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Debug = void 0;
@@ -603,7 +397,7 @@ define("Debug", ["require", "exports", "Geom"], function (require, exports, Geom
             this.color = color;
         }
         Point.prototype.drawPoint = function (game) {
-            var box = new Geom_3.Vector(0.1, 0.1);
+            var box = new Geom_2.Vector(0.1, 0.1);
             game.draw.fillRect(this.place, box, this.color);
         };
         return Point;
@@ -627,7 +421,20 @@ define("Debug", ["require", "exports", "Geom"], function (require, exports, Geom
     }());
     exports.Debug = Debug;
 });
-define("Entities/EntityAttributes/AI", ["require", "exports", "Geom", "Entities/EntityAttributes/Commands", "AuxLib"], function (require, exports, geom, Commands_2, aux) {
+define("Entities/EntityAttributes/Commands", ["require", "exports", "Geom"], function (require, exports, Geom_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Commands = void 0;
+    var Commands = (function () {
+        function Commands() {
+            this.active = new Map();
+            this.pointer = new Geom_3.Vector();
+        }
+        return Commands;
+    }());
+    exports.Commands = Commands;
+});
+define("Entities/EntityAttributes/AI", ["require", "exports", "Geom", "Entities/EntityAttributes/Commands", "AuxLib"], function (require, exports, geom, Commands_1, aux) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AI = void 0;
@@ -637,7 +444,7 @@ define("Entities/EntityAttributes/AI", ["require", "exports", "Geom", "Entities/
             this.activationTime = 0;
             this.game = game;
             this.body = body;
-            this.commands = new Commands_2.Commands();
+            this.commands = new Commands_1.Commands();
             this.Path = [];
         }
         AI.prototype.stop = function () {
@@ -892,6 +699,189 @@ define("SpriteAnimation", ["require", "exports", "Draw", "Game"], function (requ
     }());
     exports.SpriteAnimation = SpriteAnimation;
     ;
+});
+define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Commands"], function (require, exports, geom, aux, Commands_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Control = void 0;
+    var Control = (function () {
+        function Control() {
+        }
+        Control.readTextFile = function (path) {
+            return __awaiter(this, void 0, void 0, function () {
+                var response, text;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4, fetch(path)];
+                        case 1:
+                            response = _a.sent();
+                            return [4, response.text()];
+                        case 2:
+                            text = _a.sent();
+                            return [2, text];
+                    }
+                });
+            });
+        };
+        Control.loadConfig = function (path) {
+            return __awaiter(this, void 0, void 0, function () {
+                var result, vals, mapKeys, i, j;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!(localStorage.getItem("commands") == undefined)) return [3, 2];
+                            return [4, this.readTextFile(aux.environment + path)
+                                    .then(function (result) {
+                                    Control.keyMapping = JSON.parse(result, aux.reviver);
+                                    localStorage.setItem("commands", result);
+                                })
+                                    .then(function (result) {
+                                    var vals = Array.from(Control.keyMapping.values());
+                                    var mapKeys = Array.from(Control.keyMapping.keys());
+                                    for (var i = 0; i < vals.length; i++) {
+                                        for (var j = 0; j < vals[i].length; j++) {
+                                            Control.commands.active[vals[i][j]] = false;
+                                            Control.commandsCounter[vals[i][j]] = 0;
+                                            Control.commandKeys[vals[i][j]] = mapKeys[i];
+                                        }
+                                    }
+                                })];
+                        case 1:
+                            result = _a.sent();
+                            return [3, 3];
+                        case 2:
+                            Control.keyMapping = JSON.parse(localStorage.getItem("commands"), aux.reviver);
+                            vals = Array.from(Control.keyMapping.values());
+                            mapKeys = Array.from(Control.keyMapping.keys());
+                            for (i = 0; i < vals.length; i++) {
+                                for (j = 0; j < vals[i].length; j++) {
+                                    Control.commands.active[vals[i][j]] = false;
+                                    Control.commandsCounter[vals[i][j]] = 0;
+                                    Control.commandKeys[vals[i][j]] = mapKeys[i];
+                                }
+                            }
+                            _a.label = 3;
+                        case 3: return [2];
+                    }
+                });
+            });
+        };
+        Control.init = function () {
+            var canvas = document.getElementById("gameCanvas");
+            if (!aux.editorMode) {
+                window.addEventListener("keydown", Control.onKeyDown);
+                window.addEventListener("keyup", Control.onKeyUp);
+            }
+            canvas.addEventListener("click", Control.onClick);
+            window.addEventListener("wheel", Control.onWheel);
+            window.addEventListener("mousemove", Control.onMouseMove);
+            window.addEventListener("mousedown", Control.onMouseDown);
+            window.addEventListener("mouseup", Control.onMouseUp);
+            window.addEventListener("contextmenu", function (e) { return e.preventDefault(); });
+            Control.keyMapping = new Map();
+            Control.commandsCounter = new Map();
+            Control.commands = new Commands_2.Commands();
+            Control.commandKeys = new Map();
+            Control.loadConfig("keys.json");
+        };
+        Control.isMouseClicked = function () {
+            return Control.clicked;
+        };
+        Control.lastMouseCoordinates = function () {
+            Control.clicked = false;
+            return Control.commands.pointer.clone();
+        };
+        Control.wheelDelta = function () {
+            var delta = this.mouseWheelDelta;
+            this.mouseWheelDelta = 0;
+            return delta;
+        };
+        Control.clearWheelDelta = function () {
+            this.mouseWheelDelta = 0;
+        };
+        Control.mousePos = function () {
+            var canvas = document.getElementById("gameCanvas");
+            return this.currentMousePos.sub(new geom.Vector(canvas.offsetLeft, canvas.offsetTop));
+        };
+        Control.isMouseLeftPressed = function () {
+            return Control.mouseLeftPressed;
+        };
+        Control.isMouseRightPressed = function () {
+            return Control.mouseRightPressed;
+        };
+        Control.onKeyDown = function (event) {
+            if (Control._keys[event.key] == undefined) {
+                Control._keys[event.key] = false;
+            }
+            if (Control.keyMapping != undefined && Control._keys[event.key] == false) {
+                if (Control.keyMapping.get(event.key) == undefined) {
+                    Control.keyMapping.set(event.key, []);
+                }
+                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                    var currentCommand = Control.keyMapping.get(event.key)[i];
+                    Control.commandsCounter[currentCommand] = 1;
+                    Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
+                }
+            }
+            Control._keys[event.key] = true;
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+        Control.onKeyUp = function (event) {
+            if (Control.keyMapping != undefined && Control._keys[event.key] == true) {
+                if (Control.keyMapping.get(event.key) == undefined) {
+                    Control.keyMapping.set(event.key, []);
+                }
+                for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
+                    var currentCommand = Control.keyMapping.get(event.key)[i];
+                    Control.commandsCounter[currentCommand] = 0;
+                    Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
+                }
+            }
+            Control._keys[event.key] = false;
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+        Control.onClick = function (event) {
+            Control.clicked = true;
+            Control.commands.pointer = new geom.Vector(event.x, event.y);
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+        Control.onMouseDown = function (event) {
+            if (event.button == 0)
+                Control.mouseLeftPressed = true;
+            if (event.button == 2)
+                Control.mouseRightPressed = true;
+            return false;
+        };
+        Control.onMouseUp = function (event) {
+            if (event.button == 0)
+                Control.mouseLeftPressed = false;
+            if (event.button == 2)
+                Control.mouseRightPressed = false;
+            return false;
+        };
+        Control.onWheel = function (event) {
+            Control.mouseWheelDelta = event.deltaY;
+            return false;
+        };
+        Control.onMouseMove = function (event) {
+            Control.currentMousePos = new geom.Vector(event.x, event.y);
+            return false;
+        };
+        Control._keys = new Map();
+        Control.clicked = false;
+        Control.mouseLeftPressed = false;
+        Control.mouseRightPressed = false;
+        Control.currentMousePos = new geom.Vector();
+        Control.mouseWheelDelta = 0;
+        return Control;
+    }());
+    exports.Control = Control;
 });
 define("Entities/EntityAttributes/Animation", ["require", "exports", "Draw", "AuxLib"], function (require, exports, Draw_3, aux) {
     "use strict";

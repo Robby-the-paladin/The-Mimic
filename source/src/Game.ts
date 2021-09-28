@@ -3,7 +3,7 @@ import * as aux from "./AuxLib";
 import { Body } from "./Entities/EntityAttributes/Body";
 import { Entity } from "./Entities/Entity";
 import { Person, PersonMode } from "./Entities/Person";
-import { Control, Keys } from "./Control";
+import { Control} from "./Control";
 import { Draw, Color, Layer } from "./Draw";
 import { Tile, CollisionType } from "./Tile";
 import { Mimic } from "./Mimic";
@@ -249,7 +249,9 @@ export class Game {
         this.soundsarr.push(this.sounds);
     }
 
-    public step() {        
+    public step() {      
+        //console.log(Control.commands.active);
+          
         // Экран загрузки
         if (this.state == State.Waiting) { // Если в режиме ожидания
             if (Control.isMouseLeftPressed() || Control.isMouseRightPressed())

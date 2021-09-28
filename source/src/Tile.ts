@@ -1,4 +1,3 @@
-import { Keys } from "./Control";
 import { Draw } from "./Draw";
 
 export enum CollisionType {

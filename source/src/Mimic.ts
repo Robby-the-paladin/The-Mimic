@@ -1,6 +1,6 @@
 import { Game } from "./Game";
 import * as geom from "./Geom"
-import { Control, Keys } from "./Control";
+import { Control } from "./Control";
 import { Entity } from "./Entities/Entity";
 import { Person, PersonMode } from "./Entities/Person";
 import { Monster } from "./Entities/Monster";
