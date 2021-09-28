@@ -49,7 +49,7 @@ interface queue { // Для правильной отрисовки слоев
     transparency?: number,
 }
 
-interface bar_queue { // Для отрисовки Hp бара
+interface barQueue { // Для отрисовки Hp бара
 
     pos?: geom.Vector,
     box?: geom.Vector,
@@ -59,12 +59,24 @@ interface bar_queue { // Для отрисовки Hp бара
     marks?: number[],
 }
 
+interface textQueue {
+    text?: string,
+    pos?: geom.Vector,
+    font?: string,
+    color?: Color,
+    outline?: boolean,
+    outlineColor?: Color,
+    align?: CanvasTextAlign,
+    baseline?: CanvasTextBaseline
+}
+
 export class Draw {
     public canvas: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
     private imagequeueEntity: queue[] = []; // Очередь для изображений
     private imagequeueHud: queue[] = []; // Очередь для изображений
-    private hpqueue: bar_queue[] = []; // Очередь для hp бара
+    private hpqueue: barQueue[] = []; // Очередь для hp бара
+    private textqueue: textQueue[] = [];
     public cam = new Camera();
     private spriteAnimations: SpriteAnimation[] = [];
     private static images: hashimages = { }; // Хеш таблица с изображениями
@@ -177,6 +189,12 @@ export class Draw {
         // Восстанавливаем прозрачность
         this.ctx.globalAlpha = 1;
     }
+    // Текст (обработка)
+    public text(text: string, pos: geom.Vector,  font?: string, color?: Color, outline?: boolean, outlineColor?: Color,
+        align?: CanvasTextAlign, baseline?: CanvasTextBaseline) {
+            let curelem: textQueue = {text, pos, font, color, outline, outlineColor, align, baseline};
+            this.textqueue.push(curelem);
+    }
     // Изображение (обработка)
     public image(image: HTMLImageElement, pos: geom.Vector, box: geom.Vector, angle: number, layer: Layer, transparency = 1) {
         if (layer == Layer.TileLayer ) { // Отрисовка сразу
@@ -275,6 +293,11 @@ export class Draw {
                 let temp = this.imagequeueHud.pop(); //Извлечение
                 this.drawimage(temp.image, temp.pos, temp.box, temp.angle, temp.transparency);
             }
+        }
+        for (; this.textqueue.length > 0; ) {
+            let temp = this.textqueue.pop();
+            this.drawText(temp.text, temp.pos, temp.font, temp.color, temp.outline,
+                 temp.outlineColor, temp.align, temp.baseline);   
         }
     }
     // Заполненный прямоугольник
@@ -398,7 +421,7 @@ export class Draw {
             percentage = 1;
         if (percentage < 0)
             percentage = 0;
-        let queue: bar_queue = { pos, box, percentage, frontColor, backColor, marks };
+        let queue: barQueue = { pos, box, percentage, frontColor, backColor, marks };
         this.hpqueue.push(queue); // Добавляем в очередь на отрисовку
 
 

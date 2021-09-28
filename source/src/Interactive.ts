@@ -25,12 +25,12 @@ export class Interactive {
     }
 
     public step() {
-        console.log(this.isPointVisible(this.game.mimic.controlledEntity.body.center));
         
         if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
-            this.game.draw.drawText("Press " + Control.commandKeys["action"] + " to " + this.text, 
+            this.game.draw.text("Press " + Control.commandKeys["action"] + " to " + this.text, 
             new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
             if (Control.commands["action"]) {
+                console.log("func?");
                 this.func();
             }
         }

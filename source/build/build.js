@@ -729,7 +729,7 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!(localStorage.getItem("commands") == undefined)) return [3, 2];
+                            if (!(true || localStorage.getItem("commands") == undefined)) return [3, 2];
                             return [4, this.readTextFile(aux.environment + path)
                                     .then(function (result) {
                                     Control.keyMapping = JSON.parse(result, aux.reviver);
@@ -810,6 +810,7 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
             return Control.mouseRightPressed;
         };
         Control.onKeyDown = function (event) {
+            console.log(event.key);
             if (Control._keys[event.key] == undefined) {
                 Control._keys[event.key] = false;
             }
@@ -819,7 +820,7 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
                 }
                 for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                     var currentCommand = Control.keyMapping.get(event.key)[i];
-                    Control.commandsCounter[currentCommand] = 1;
+                    Control.commandsCounter[currentCommand] += 1;
                     Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
                 }
             }
@@ -835,7 +836,7 @@ define("Control", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttri
                 }
                 for (var i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                     var currentCommand = Control.keyMapping.get(event.key)[i];
-                    Control.commandsCounter[currentCommand] = 0;
+                    Control.commandsCounter[currentCommand] -= 1;
                     Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
                 }
             }
@@ -1836,10 +1837,10 @@ define("Interactive", ["require", "exports", "Control", "Geom", "RayCasting"], f
                 && !RayCasting_2.Ray.wallIntersection(this.entity.body.center, pos, this.game));
         };
         Interactive.prototype.step = function () {
-            console.log(this.isPointVisible(this.game.mimic.controlledEntity.body.center));
             if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
-                this.game.draw.drawText("Press " + Control_2.Control.commandKeys["action"] + " to " + this.text, new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
+                this.game.draw.text("Press " + Control_2.Control.commandKeys["action"] + " to " + this.text, new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
                 if (Control_2.Control.commands["action"]) {
+                    console.log("func?");
                     this.func();
                 }
             }
@@ -1929,8 +1930,7 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                 if (value.dataType == 'StationaryObject') {
                     var stationaryObject = Game.currentGame.makeStationaryObject(value.center, value.type, "Interior");
                     if (value.type == 1) {
-                        var entity = stationaryObject;
-                        entity.interactive = new Interactive_1.Interactive(stationaryObject, Game.currentGame, function action() {
+                        stationaryObject.interactive = new Interactive_1.Interactive(stationaryObject, Game.currentGame, function action() {
                             console.log("Ouch...");
                         });
                     }
@@ -2642,6 +2642,7 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             this.imagequeueEntity = [];
             this.imagequeueHud = [];
             this.hpqueue = [];
+            this.textqueue = [];
             this.cam = new Camera();
             this.spriteAnimations = [];
             this.canvas = canvas;
@@ -2743,6 +2744,10 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             }
             this.ctx.globalAlpha = 1;
         };
+        Draw.prototype.text = function (text, pos, font, color, outline, outlineColor, align, baseline) {
+            var curelem = { text: text, pos: pos, font: font, color: color, outline: outline, outlineColor: outlineColor, align: align, baseline: baseline };
+            this.textqueue.push(curelem);
+        };
         Draw.prototype.image = function (image, pos, box, angle, layer, transparency) {
             if (transparency === void 0) { transparency = 1; }
             if (layer == Layer.TileLayer) {
@@ -2838,6 +2843,10 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
                     var temp = this.imagequeueHud.pop();
                     this.drawimage(temp.image, temp.pos, temp.box, temp.angle, temp.transparency);
                 }
+            }
+            for (; this.textqueue.length > 0;) {
+                var temp = this.textqueue.pop();
+                this.drawText(temp.text, temp.pos, temp.font, temp.color, temp.outline, temp.outlineColor, temp.align, temp.baseline);
             }
         };
         Draw.prototype.fillRect = function (pos, box, color) {

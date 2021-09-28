@@ -21,7 +21,7 @@ export class Control {
     }
 
     public static async loadConfig(path: string) {
-        if (localStorage.getItem("commands") == undefined) {
+        if (true || localStorage.getItem("commands") == undefined) {
             let result = await this.readTextFile(aux.environment + path)
                 .then(result => {
                     Control.keyMapping = JSON.parse(result, aux.reviver);
@@ -106,6 +106,7 @@ export class Control {
     }
 
     private static onKeyDown(event: KeyboardEvent): boolean {
+        console.log(event.key);
         if (Control._keys[event.key] == undefined) {
             Control._keys[event.key] = false;
         }
@@ -116,7 +117,7 @@ export class Control {
             }
             for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                 let currentCommand = Control.keyMapping.get(event.key)[i];
-                Control.commandsCounter[currentCommand] = 1;
+                Control.commandsCounter[currentCommand] += 1;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
@@ -133,7 +134,7 @@ export class Control {
             }
             for (let i = 0; i < Control.keyMapping.get(event.key).length; i++) {
                 let currentCommand = Control.keyMapping.get(event.key)[i];
-                Control.commandsCounter[currentCommand] = 0;
+                Control.commandsCounter[currentCommand] -= 1;
                 Control.commands.active[currentCommand] = (Control.commandsCounter[currentCommand] != 0);
             }
         }
