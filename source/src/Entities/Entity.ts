@@ -6,6 +6,7 @@ import { Game } from "../Game";
 import { Commands } from "./EntityAttributes/Commands";
 import { Draw } from "../Draw";
 import { AnimationState } from "../SpriteAnimation";
+import { Interactive } from "../Interactive";
 
 export class Entity {
     public game: Game;
@@ -17,6 +18,7 @@ export class Entity {
     public alive = true;
     public hpMax = 15; // Максимальное здоровье
     public hp = this.hpMax; // Текущее здоровье
+    public interactive: Interactive = undefined;
 
     constructor(game: Game, body: Body) {
         this.game = game;
@@ -39,6 +41,9 @@ export class Entity {
         this.myAI.step();
         // Восстанавливаем комманды
         this.commands = this.myAI.commands;
+        if (this.interactive != undefined) {
+            this.interactive.step();
+        }
     }
 
     public display(draw: Draw) {

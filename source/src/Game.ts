@@ -18,6 +18,7 @@ import { StationaryObject } from "./Entities/StationaryObject";
 import { BehaviorModel, Instruction } from "./BehaviorModel";
 import { Biomass } from "./Entities/Projectiles/Biomass";
 import { Sounds } from "./Sounds";
+import { Interactive } from "./Interactive";
 
 export enum State {
     Waiting,
@@ -84,6 +85,13 @@ export class Game {
             }
             if (value.dataType == 'StationaryObject') {
                 let stationaryObject = Game.currentGame.makeStationaryObject(value.center, value.type, "Interior");
+                if (value.type == 1) {
+                    stationaryObject.interactive = new Interactive(stationaryObject, Game.currentGame,
+                        function action() {
+                            console.log("Ouch...");
+                            
+                        })
+                }
                 return stationaryObject;
             }
             if (value.dataType == 'BehaviorModel') {

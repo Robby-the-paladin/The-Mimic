@@ -1816,7 +1816,39 @@ define("Entities/Soldier", ["require", "exports", "Entities/Person", "Entities/E
     }(Person_4.Person));
     exports.Soldier = Soldier;
 });
-define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Body", "Entities/Person", "Control", "Draw", "Tile", "Mimic", "Level", "Trigger", "Debug", "Entities/Scientist", "Entities/Soldier", "Entities/Monster", "Entities/Corpse", "Entities/StationaryObject", "BehaviorModel", "Entities/Projectiles/Biomass", "Sounds"], function (require, exports, geom, aux, Body_2, Person_5, Control_2, Draw_11, Tile_2, Mimic_1, Level_1, Trigger_1, Debug_3, Scientist_1, Soldier_1, Monster_3, Corpse_2, StationaryObject_2, BehaviorModel_2, Biomass_2, Sounds_5) {
+define("Interactive", ["require", "exports", "Control", "Geom", "RayCasting"], function (require, exports, Control_2, geom, RayCasting_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Interactive = void 0;
+    var Interactive = (function () {
+        function Interactive(entity, game, func, radius, text) {
+            if (radius === void 0) { radius = 1; }
+            if (text === void 0) { text = "activate"; }
+            this.radius = 1;
+            this.entity = entity;
+            this.game = game;
+            this.radius = radius;
+            this.text = text;
+            this.func = func;
+        }
+        Interactive.prototype.isPointVisible = function (pos) {
+            return (geom.dist(this.entity.body.center, pos) <= this.radius
+                && !RayCasting_2.Ray.wallIntersection(this.entity.body.center, pos, this.game));
+        };
+        Interactive.prototype.step = function () {
+            console.log(this.isPointVisible(this.game.mimic.controlledEntity.body.center));
+            if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
+                this.game.draw.drawText("Press " + Control_2.Control.commandKeys["action"] + " to " + this.text, new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
+                if (Control_2.Control.commands["action"]) {
+                    this.func();
+                }
+            }
+        };
+        return Interactive;
+    }());
+    exports.Interactive = Interactive;
+});
+define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Body", "Entities/Person", "Control", "Draw", "Tile", "Mimic", "Level", "Trigger", "Debug", "Entities/Scientist", "Entities/Soldier", "Entities/Monster", "Entities/Corpse", "Entities/StationaryObject", "BehaviorModel", "Entities/Projectiles/Biomass", "Sounds", "Interactive"], function (require, exports, geom, aux, Body_2, Person_5, Control_3, Draw_11, Tile_2, Mimic_1, Level_1, Trigger_1, Debug_3, Scientist_1, Soldier_1, Monster_3, Corpse_2, StationaryObject_2, BehaviorModel_2, Biomass_2, Sounds_5, Interactive_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Game = exports.State = void 0;
@@ -1840,7 +1872,7 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
             this.sounds = new Sounds_5.Sounds(0.01);
             this.frags = 0;
             console.log("im here!!");
-            Control_2.Control.init();
+            Control_3.Control.init();
             this.draw = draw;
             this.currentLevel.Grid = [];
             this.mimic = new Mimic_1.Mimic(this);
@@ -1896,6 +1928,12 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                 }
                 if (value.dataType == 'StationaryObject') {
                     var stationaryObject = Game.currentGame.makeStationaryObject(value.center, value.type, "Interior");
+                    if (value.type == 1) {
+                        var entity = stationaryObject;
+                        entity.interactive = new Interactive_1.Interactive(stationaryObject, Game.currentGame, function action() {
+                            console.log("Ouch...");
+                        });
+                    }
                     return stationaryObject;
                 }
                 if (value.dataType == 'BehaviorModel') {
@@ -2047,7 +2085,7 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
         };
         Game.prototype.step = function () {
             if (this.state == State.Waiting) {
-                if (Control_2.Control.isMouseLeftPressed() || Control_2.Control.isMouseRightPressed())
+                if (Control_3.Control.isMouseLeftPressed() || Control_3.Control.isMouseRightPressed())
                     this.startGame();
                 return;
             }
@@ -2227,6 +2265,7 @@ define("Entities/Entity", ["require", "exports", "Geom", "Entities/EntityAttribu
             this.alive = true;
             this.hpMax = 15;
             this.hp = this.hpMax;
+            this.interactive = undefined;
             this.game = game;
             this.body = body;
             this.myAI = new AI_1.AI(game, body);
@@ -2244,6 +2283,9 @@ define("Entities/Entity", ["require", "exports", "Geom", "Entities/EntityAttribu
                 return;
             this.myAI.step();
             this.commands = this.myAI.commands;
+            if (this.interactive != undefined) {
+                this.interactive.step();
+            }
         };
         Entity.prototype.display = function (draw) {
             draw.image(this.animation.current_state, this.body.center.sub(new geom.Vector(0, 0.5 - this.body.collisionBox.y / 2)), new geom.Vector(1, 1), 0, 1);
@@ -3298,7 +3340,7 @@ define("Editor/ListOfPads", ["require", "exports", "BehaviorModel", "Editor/Curs
     }());
     exports.ListOfPads = ListOfPads;
 });
-define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Entity", "Entities/EntityAttributes/Body", "Entities/Monster", "Entities/Person", "Entities/Scientist", "Entities/Soldier", "Geom", "Tile", "AuxLib", "Editor/ListOfPads", "Entities/StationaryObject"], function (require, exports, Control_3, Draw_15, Entity_4, Body_3, Monster_5, Person_6, Scientist_3, Soldier_3, geom, Tile_5, aux, ListOfPads_1, StationaryObject_4) {
+define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Entity", "Entities/EntityAttributes/Body", "Entities/Monster", "Entities/Person", "Entities/Scientist", "Entities/Soldier", "Geom", "Tile", "AuxLib", "Editor/ListOfPads", "Entities/StationaryObject"], function (require, exports, Control_4, Draw_15, Entity_4, Body_3, Monster_5, Person_6, Scientist_3, Soldier_3, geom, Tile_5, aux, ListOfPads_1, StationaryObject_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Cursor = exports.Mode = exports.ToolType = void 0;
@@ -3401,9 +3443,9 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
             }
         };
         Cursor.prototype.step = function () {
-            this.pos = this.draw.transformBack(Control_3.Control.mousePos());
+            this.pos = this.draw.transformBack(Control_4.Control.mousePos());
             this.gridPos = this.level.gridCoordinates(this.pos);
-            if (Control_3.Control.isMouseLeftPressed() && this.level.isInBounds(this.pos)) {
+            if (Control_4.Control.isMouseLeftPressed() && this.level.isInBounds(this.pos)) {
                 switch (this.mode) {
                     case Mode.Eraser: {
                         if (this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)] != null) {
@@ -3451,7 +3493,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
                     }
                 }
             }
-            if (!Control_3.Control.isMouseLeftPressed()) {
+            if (!Control_4.Control.isMouseLeftPressed()) {
                 this.mouseLeftButtonClicked = true;
             }
         };
@@ -3481,7 +3523,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
     }());
     exports.Cursor = Cursor;
 });
-define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject"], function (require, exports, Control_4, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5) {
+define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject"], function (require, exports, Control_5, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Editor = void 0;
@@ -3530,7 +3572,7 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
                 1, 0, 1, 1, 1,
                 1, 1, 1, 0, 0,
                 0];
-            this.mousePrev = Control_4.Control.mousePos();
+            this.mousePrev = Control_5.Control.mousePos();
             this.initHTML();
         }
         Editor.prototype.isTileSubImage = function (idPalette) {
@@ -3843,14 +3885,14 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
             return false;
         };
         Editor.prototype.moveCamera = function () {
-            var mouseCoords = Control_4.Control.mousePos().clone();
+            var mouseCoords = Control_5.Control.mousePos().clone();
             if (this.isInCanvas(mouseCoords)) {
-                this.draw.cam.scale *= Math.pow(1.001, -Control_4.Control.wheelDelta());
+                this.draw.cam.scale *= Math.pow(1.001, -Control_5.Control.wheelDelta());
             }
             else {
-                Control_4.Control.clearWheelDelta();
+                Control_5.Control.clearWheelDelta();
             }
-            if (Control_4.Control.isMouseRightPressed() && this.isInCanvas(mouseCoords)) {
+            if (Control_5.Control.isMouseRightPressed() && this.isInCanvas(mouseCoords)) {
                 var delta = mouseCoords.sub(this.mousePrev);
                 this.draw.cam.pos = this.draw.cam.pos.sub(delta.mul(1 / this.draw.cam.scale));
             }
@@ -3912,30 +3954,6 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
         return Editor;
     }());
     exports.Editor = Editor;
-});
-define("Interactive", ["require", "exports", "Geom", "RayCasting"], function (require, exports, geom, RayCasting_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Interactive = void 0;
-    var Interactive = (function () {
-        function Interactive(entity, game, radius, text) {
-            if (radius === void 0) { radius = 1; }
-            if (text === void 0) { text = "activate"; }
-            this.radius = 1;
-            this.entity = entity;
-            this.game = game;
-        }
-        Interactive.prototype.isPointVisible = function (pos) {
-            return (geom.dist(this.entity.body.center, pos) <= this.radius
-                && !RayCasting_2.Ray.wallIntersection(this.entity.body.center, pos, this.game));
-        };
-        Interactive.prototype.step = function () {
-            if (this.isPointVisible(this.game.mimic.controlledEntity.body.center)) {
-            }
-        };
-        return Interactive;
-    }());
-    exports.Interactive = Interactive;
 });
 define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_9, Editor_1) {
     "use strict";
