@@ -16,6 +16,7 @@ import { BehaviorModel, Instruction } from "./BehaviorModel";
 import { ListOfPads } from "./Editor/ListOfPads";
 import { EditorGUI } from "./Editor/EditorGUI";
 import { StationaryObject } from "./Entities/StationaryObject";
+import { Game } from "./Game";
 
 export class Editor {
     private mousePrev: geom.Vector;
@@ -30,47 +31,23 @@ export class Editor {
         this.initHTML();
     }
 
-    private palette1_bitmap: number[] = [0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        1, 0, 1, 0, 0,
-        0, 0, 0, 1, 0,
-        1, 1, 1, 0, 1,
-        0, 1, 1, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0];
-
-    private palette2_bitmap: number[] = [0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        1, 1, 1, 1, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        1, 1, 1, 1, 1,
-        0, 0, 0, 0, 0,
-        1, 1, 1, 1, 1,
-        1, 1, 1, 1, 0,
-        0, 0, 0, 0, 0,
-        1, 1, 1, 1];
-
-    private palette3_bitmap: number[] = [0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        1, 1, 1, 1, 1,
-        1, 0, 1, 1, 1,
-        1, 1, 1, 0, 0,
-        0];
+    public loadLevel(data: string) {
+        let prototype = JSON.parse(data, Game.reviver);
+        let level = new Level();
+        level.createFromPrototype(prototype);
+        level.showLighting = true;
+        level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
+        let elem = document.getElementById("range_menu_x") as HTMLInputElement;
+        elem.value = level.Grid.length.toString();
+        elem = document.getElementById("range_menu_y") as HTMLInputElement;
+        elem.value = level.Grid[0].length.toString();
+        let showLighting = this.level.showLighting;
+        this.level = level;
+        this.cursor.level = level;
+        this.level.showLighting = showLighting;
+        console.log(level.Entities);
+        
+    }
 
     private isTileSubImage(idPalette: number): boolean {
         switch (idPalette) {
@@ -256,6 +233,17 @@ export class Editor {
         // Обработка кнопок
         let generate = () => { this.level.serialize(); }
         document.getElementById("generate").onclick = generate;
+        let load = (evt) => {
+            var files = evt.target.files; // FileList object
+            console.log("loading map", files[0]);
+            let fr = new FileReader;
+            fr.readAsText(files[0]);
+            let onload = () => {
+                this.loadLevel(fr.result.toString());
+            }
+            fr.onload = onload;
+        }
+        document.getElementById("load").addEventListener('change', load, true)
         let showcollision = () => {
             let chboxxx = <HTMLInputElement>document.getElementById("showcolision");
             this.showCollisionGrid = chboxxx.checked;

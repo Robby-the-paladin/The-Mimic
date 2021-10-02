@@ -21,6 +21,10 @@
     .palettes_text {
         position: absolute
     }
+
+    input[type="file"] {
+        display: none;
+    }
     
     .tileButton {
         width: 50px;
@@ -266,14 +270,31 @@
     .buttonGen {
         appearance: none;
         border: 0;
+        vertical-align:-100%;
         border-radius: 5px;
         background: black;
         color: #fff;
-        padding: 8px 16px;
+        padding: 16px 7px;
+        height: 54px;
+    }
+
+    .buttonLoad {
+        appearance: none;
+        border: 0;
+        vertical-align:-100%;
+        border-radius: 5px;
+        background: black;
+        color: #fff;
+        padding: 16px 7px;
         height: 54px;
     }
     
     .buttonGen:hover {
+        background: #fff;
+        color: black;
+    }
+    
+    .buttonLoad:hover {
         background: #fff;
         color: black;
     }
@@ -541,7 +562,9 @@
 
         <canvas id="preview" class="prevCanvass"></canvas>
 
-        <button id="generate" class="buttonGen"> Generate </button>
+        <label id="generate" class="buttonGen"> Generate </label>
+        <label for="load" class="buttonLoad"> Load </label>
+        <input id="load" type="file"/>
     </div>
 
     <div id="range_menu" class="range_menu">

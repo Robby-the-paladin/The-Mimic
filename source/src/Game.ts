@@ -85,13 +85,6 @@ export class Game {
             }
             if (value.dataType == 'StationaryObject') {
                 let stationaryObject = Game.currentGame.makeStationaryObject(value.center, value.type, "Interior");
-                if (value.type == 1) {
-                    stationaryObject.interactive = new Interactive(stationaryObject, Game.currentGame,
-                        function action() {
-                            console.log("Ouch...");
-                            
-                        })
-                }
                 return stationaryObject;
             }
             if (value.dataType == 'BehaviorModel') {

@@ -1821,6 +1821,37 @@ define("Entities/Soldier", ["require", "exports", "Entities/Person", "Entities/E
     }(Person_4.Person));
     exports.Soldier = Soldier;
 });
+define("InteractiveFunctions", ["require", "exports", "Game"], function (require, exports, Game_8) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.actionsInit = exports.functions = exports.Action = void 0;
+    var Action = (function () {
+        function Action(description, argsNum, func, args) {
+            this.description = description;
+            this.argsNum = argsNum;
+            this.func = func;
+            this.args = args;
+        }
+        Action.prototype.clone = function () {
+            return new Action(this.description, this.argsNum, this.func, this.args);
+        };
+        Action.prototype.run = function () {
+            this.func(this.args);
+        };
+        return Action;
+    }());
+    exports.Action = Action;
+    exports.functions = new Map();
+    function actionsInit() {
+        var action = new Action("Функция перехода на другой уровень. 1 аргумент - название нового уровня.", 1, function func(args) {
+            var name = args[0];
+            Game_8.Game.currentGame.currentLevelName = name;
+            Game_8.Game.currentGame.startGame();
+        }, []);
+        exports.functions["transition"] = action;
+    }
+    exports.actionsInit = actionsInit;
+});
 define("Interactive", ["require", "exports", "Control", "Geom", "RayCasting"], function (require, exports, Control_2, geom, RayCasting_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1846,8 +1877,7 @@ define("Interactive", ["require", "exports", "Control", "Geom", "RayCasting"], f
                 this.game.draw.text("Press " + Control_2.Control.commandKeys["action"] + " to " + this.text, new geom.Vector(this.game.draw.canvas.width / 2, 30), undefined, undefined, true);
                 if (Control_2.Control.commands.active["action"] && this.toggled) {
                     this.toggled = false;
-                    console.log("func?");
-                    this.func();
+                    this.func.run();
                 }
                 else {
                     this.toggled = true;
@@ -1858,7 +1888,7 @@ define("Interactive", ["require", "exports", "Control", "Geom", "RayCasting"], f
     }());
     exports.Interactive = Interactive;
 });
-define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Body", "Entities/Person", "Control", "Draw", "Tile", "Mimic", "Level", "Trigger", "Debug", "Entities/Scientist", "Entities/Soldier", "Entities/Monster", "Entities/Corpse", "Entities/StationaryObject", "BehaviorModel", "Entities/Projectiles/Biomass", "Sounds", "Interactive"], function (require, exports, geom, aux, Body_2, Person_5, Control_3, Draw_11, Tile_2, Mimic_1, Level_1, Trigger_1, Debug_3, Scientist_1, Soldier_1, Monster_3, Corpse_2, StationaryObject_2, BehaviorModel_2, Biomass_2, Sounds_5, Interactive_1) {
+define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttributes/Body", "Entities/Person", "Control", "Draw", "Tile", "Mimic", "Level", "Trigger", "Debug", "Entities/Scientist", "Entities/Soldier", "Entities/Monster", "Entities/Corpse", "Entities/StationaryObject", "BehaviorModel", "Entities/Projectiles/Biomass", "Sounds"], function (require, exports, geom, aux, Body_2, Person_5, Control_3, Draw_11, Tile_2, Mimic_1, Level_1, Trigger_1, Debug_3, Scientist_1, Soldier_1, Monster_3, Corpse_2, StationaryObject_2, BehaviorModel_2, Biomass_2, Sounds_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Game = exports.State = void 0;
@@ -1937,11 +1967,6 @@ define("Game", ["require", "exports", "Geom", "AuxLib", "Entities/EntityAttribut
                 }
                 if (value.dataType == 'StationaryObject') {
                     var stationaryObject = Game.currentGame.makeStationaryObject(value.center, value.type, "Interior");
-                    if (value.type == 1) {
-                        stationaryObject.interactive = new Interactive_1.Interactive(stationaryObject, Game.currentGame, function action() {
-                            console.log("Ouch...");
-                        });
-                    }
                     return stationaryObject;
                 }
                 if (value.dataType == 'BehaviorModel') {
@@ -2296,7 +2321,7 @@ define("Entities/Entity", ["require", "exports", "Geom", "Entities/EntityAttribu
     }());
     exports.Entity = Entity;
 });
-define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGenerator", "Entities/Soldier", "Entities/Scientist", "Entities/Monster", "Entities/StationaryObject", "BehaviorModel", "AuxLib", "Queue", "Random", "Game"], function (require, exports, Tile_4, geom, Draw_12, PathGenerator_1, Soldier_2, Scientist_2, Monster_4, StationaryObject_3, BehaviorModel_3, aux, Queue_2, Random_2, Game_8) {
+define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGenerator", "Entities/Soldier", "Entities/Scientist", "Entities/Monster", "Entities/StationaryObject", "BehaviorModel", "AuxLib", "Queue", "Random", "Game"], function (require, exports, Tile_4, geom, Draw_12, PathGenerator_1, Soldier_2, Scientist_2, Monster_4, StationaryObject_3, BehaviorModel_3, aux, Queue_2, Random_2, Game_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Level = exports.LightSource = exports.LevelJSON = exports.replacer = void 0;
@@ -2410,14 +2435,14 @@ define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGener
             this.frequency = Random_2.Random.randomFloat(1, 2);
         }
         LightSource.prototype.step = function () {
-            this.time += Game_8.Game.dt;
-            this.timeOff -= Game_8.Game.dt;
+            this.time += Game_9.Game.dt;
+            this.timeOff -= Game_9.Game.dt;
             if (!this.enableFlickering) {
                 this.power = this.basePower;
                 return;
             }
             this.power = this.basePower + Math.sin(this.time * Math.PI * this.frequency) * this.amplitude;
-            if (Random_2.Random.randomFloat(0, this.offPeriod) < Game_8.Game.dt) {
+            if (Random_2.Random.randomFloat(0, this.offPeriod) < Game_9.Game.dt) {
                 this.timeOff = this.offTiming;
                 this.offCount = Random_2.Random.randomInt(1, 5);
             }
@@ -2515,7 +2540,7 @@ define("Level", ["require", "exports", "Tile", "Geom", "Draw", "Editor/PathGener
             window.open(url);
         };
         Level.prototype.createFromPrototype = function (prototype) {
-            this.Entities = [];
+            this.Entities = prototype.Entities;
             this.Grid = prototype.Grid;
             this.CollisionMesh = prototype.CollisionMesh;
             this.PathMatrix = prototype.PathMatrix;
@@ -3534,7 +3559,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
     }());
     exports.Cursor = Cursor;
 });
-define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject"], function (require, exports, Control_5, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5) {
+define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject", "Game"], function (require, exports, Control_5, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5, Game_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Editor = void 0;
@@ -3544,48 +3569,25 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
             this.cursor = new Cursor_2.Cursor(this.level);
             this.showCollisionGrid = false;
             this.hideGrid = false;
-            this.palette1_bitmap = [0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                1, 0, 1, 0, 0,
-                0, 0, 0, 1, 0,
-                1, 1, 1, 0, 1,
-                0, 1, 1, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0];
-            this.palette2_bitmap = [0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                1, 1, 1, 1, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                1, 1, 1, 1, 1,
-                0, 0, 0, 0, 0,
-                1, 1, 1, 1, 1,
-                1, 1, 1, 1, 0,
-                0, 0, 0, 0, 0,
-                1, 1, 1, 1];
-            this.palette3_bitmap = [0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                1, 1, 1, 1, 1,
-                1, 0, 1, 1, 1,
-                1, 1, 1, 0, 0,
-                0];
             this.mousePrev = Control_5.Control.mousePos();
             this.initHTML();
         }
+        Editor.prototype.loadLevel = function (data) {
+            var prototype = JSON.parse(data, Game_10.Game.reviver);
+            var level = new Level_2.Level();
+            level.createFromPrototype(prototype);
+            level.showLighting = true;
+            level.gridSize = new geom.Vector(level.Grid.length, level.Grid[0].length);
+            var elem = document.getElementById("range_menu_x");
+            elem.value = level.Grid.length.toString();
+            elem = document.getElementById("range_menu_y");
+            elem.value = level.Grid[0].length.toString();
+            var showLighting = this.level.showLighting;
+            this.level = level;
+            this.cursor.level = level;
+            this.level.showLighting = showLighting;
+            console.log(level.Entities);
+        };
         Editor.prototype.isTileSubImage = function (idPalette) {
             switch (idPalette) {
                 case 1: {
@@ -3767,6 +3769,17 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
             ListOfPads_2.ListOfPads.init(this.cursor);
             var generate = function () { _this.level.serialize(); };
             document.getElementById("generate").onclick = generate;
+            var load = function (evt) {
+                var files = evt.target.files;
+                console.log("loading map", files[0]);
+                var fr = new FileReader;
+                fr.readAsText(files[0]);
+                var onload = function () {
+                    _this.loadLevel(fr.result.toString());
+                };
+                fr.onload = onload;
+            };
+            document.getElementById("load").addEventListener('change', load, true);
             var showcollision = function () {
                 var chboxxx = document.getElementById("showcolision");
                 _this.showCollisionGrid = chboxxx.checked;
@@ -3966,7 +3979,18 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
     }());
     exports.Editor = Editor;
 });
-define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_9, Editor_1) {
+define("LevelGraph", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Edge = void 0;
+    var Edge = (function () {
+        function Edge() {
+        }
+        return Edge;
+    }());
+    exports.Edge = Edge;
+});
+define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"], function (require, exports, geom, aux, Draw_17, Game_11, Editor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/");
@@ -3977,11 +4001,11 @@ define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"
     canvas.height = window.innerHeight;
     var draw = new Draw_17.Draw(canvas);
     draw.cam.scale = 10;
-    var game = new Game_9.Game(draw);
+    var game = new Game_11.Game(draw);
     game.levels = new Map();
     game.levelBackups = new Map();
-    Game_9.Game.currentGame = game;
-    Game_9.Game.loadMap("map.json", "map");
+    Game_11.Game.currentGame = game;
+    Game_11.Game.loadMap("map.json", "map");
     var x = false;
     var t = 0;
     function step() {
@@ -4011,6 +4035,6 @@ define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor"
         setInterval(editorStep, 20);
     }
     else
-        setInterval(step, Game_9.Game.dt * 1000);
+        setInterval(step, Game_11.Game.dt * 1000);
 });
 //# sourceMappingURL=build.js.map
