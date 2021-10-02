@@ -12,7 +12,6 @@ import { CollisionType, Tile } from "../Tile";
 import { BehaviorModel } from "../BehaviorModel";
 import * as aux from "../AuxLib";
 import { ListOfPads } from "./ListOfPads";
-import { url } from "inspector";
 import { StationaryObject } from "../Entities/StationaryObject";
 
 export enum ToolType {

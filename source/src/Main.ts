@@ -8,8 +8,8 @@ import { Instruction } from "./BehaviorModel";
 import { Person } from "./Entities/Person";
 import { Scientist } from "./Entities/Scientist";
 import { Behavior } from "./Entities/Person";
-import { Ray } from "./RayCasting";
-import { Verify } from "crypto";
+import { Ray } from "./RayCasting"
+import { global } from "./GlobalEditor";
 
 aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/"); // Если с Гита
 //aux.setEnvironment("http://127.0.0.1:8000/"); // Если локальный сервер
@@ -56,17 +56,18 @@ function step() {
         game.display();
     }
 }
-if (levelEditorMode) {
-    // В случае если режим редактора
-    let editor = new Editor();
-    editor.setDraw(draw);
-    editor.draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
-    let editorStep = function () {
-        editor.step();
-        draw.clear();
-        editor.display();
-    }
-    setInterval(editorStep, 20);
-}
-else
-    setInterval(step, Game.dt * 1000);
+global();
+// if (levelEditorMode) {
+//     // В случае если режим редактора
+//     let editor = new Editor();
+//     editor.setDraw(draw);
+//     editor.draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
+//     let editorStep = function () {
+//         editor.step();
+//         draw.clear();
+//         editor.display();
+//     }
+//     setInterval(editorStep, 20);
+// }
+// else
+//     setInterval(step, Game.dt * 1000);

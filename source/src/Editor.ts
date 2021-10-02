@@ -4,14 +4,12 @@ import { Level } from "./Level";
 import * as geom from "./Geom";
 import { Cursor, Mode, ToolType } from "./Editor/Cursor";
 import { CollisionType, Tile } from "./Tile";
-import { Entity } from "./Entities/Entity";
 import { Body } from "./Entities/EntityAttributes/Body";
 import { Soldier } from "./Entities/Soldier";
 import { Scientist } from "./Entities/Scientist";
 import { Person, PersonMode } from "./Entities/Person";
 import { Monster } from "./Entities/Monster";
 import { Animation } from "./Entities/EntityAttributes/Animation";
-import { getMilliCount } from "./AuxLib";
 import { BehaviorModel, Instruction } from "./BehaviorModel";
 import { ListOfPads } from "./Editor/ListOfPads";
 import { EditorGUI } from "./Editor/EditorGUI";
@@ -60,6 +58,14 @@ export class Editor {
                 for (let j = 0; j < keys.length; j++) {
                     behmod.instructions[keys[j]] = behmod.instructions.get(keys[j]);
                 }
+            }
+        }
+        while(this.level.Grid.length  < 50) {
+            this.level.Grid.push([]);
+        }
+        for (let x = 0; x < 50; x++) {
+            while (this.level.Grid[x].length < 50) {
+                this.level.Grid[x].push(new Tile());
             }
         }
         console.log(level.Entities);
