@@ -247,6 +247,13 @@ export class Editor {
     // Инициализирует взаимодействие с HTML
     private initHTML() {
         ListOfPads.init(this.cursor);
+        let canvas = document.getElementById("gameCanvas");
+        canvas.onmouseover = () => {
+            this.cursor.onMouseOverCanvas = true;
+        }
+        canvas.onmouseout = () => {
+            this.cursor.onMouseOverCanvas = false;
+        }
         // Обработка кнопок
         let generate = () => { this.level.serialize(); }
         document.getElementById("generate").onclick = generate;
@@ -457,12 +464,14 @@ export class Editor {
         this.cursor.display();
         for (let i = 0; i < this.level.Entities.length; i++) {
             let curEntity = this.level.Entities[i];
-            if (curEntity instanceof Person)
-                this.draw.drawimage(curEntity.animation.getDefaultImage(),
-                    this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
-            if (curEntity instanceof StationaryObject)
-                this.draw.drawimage(curEntity.image,
-                    this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+            if (this.level.isCellInBounds(curEntity.body.center)) {
+                if (curEntity instanceof Person)
+                    this.draw.drawimage(curEntity.animation.getDefaultImage(),
+                        this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+                if (curEntity instanceof StationaryObject)
+                    this.draw.drawimage(curEntity.image,
+                        this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+            }
         }
         ListOfPads.GUIstep();
         EditorGUI.display(this.draw);

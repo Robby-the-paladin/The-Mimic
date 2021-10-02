@@ -3304,7 +3304,6 @@ define("Editor/ListOfPads", ["require", "exports", "BehaviorModel", "Editor/Curs
             for (var i = 0; i < this.instructionCopy.operations.length; i++) {
                 switch (this.instructionCopy.operations[i]) {
                     case BehaviorModel_5.Operations.goToPoint: {
-                        console.log(currentPos, this.instructionCopy.operationsData[i]);
                         var oldPos = currentPos;
                         EditorGUI_1.EditorGUI.addLine(currentPos, this.instructionCopy.operationsData[i], new Draw_14.Color(0, 255, 0, 1));
                         currentPos = this.instructionCopy.operationsData[i];
@@ -3399,6 +3398,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
         function Cursor(level, draw) {
             if (level === void 0) { level = null; }
             if (draw === void 0) { draw = null; }
+            this.onMouseOverCanvas = false;
             this.pos = new geom.Vector();
             this.gridPos = new geom.Vector();
             this.tile = new Tile_5.Tile(Tile_5.CollisionType.Full);
@@ -3481,7 +3481,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
         Cursor.prototype.step = function () {
             this.pos = this.draw.transformBack(Control_4.Control.mousePos());
             this.gridPos = this.level.gridCoordinates(this.pos);
-            if (Control_4.Control.isMouseLeftPressed() && this.level.isInBounds(this.pos)) {
+            if (Control_4.Control.isMouseLeftPressed() && this.level.isInBounds(this.pos) && this.onMouseOverCanvas) {
                 switch (this.mode) {
                     case Mode.Eraser: {
                         if (this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)] != null) {
@@ -3780,6 +3780,13 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
         Editor.prototype.initHTML = function () {
             var _this = this;
             ListOfPads_2.ListOfPads.init(this.cursor);
+            var canvas = document.getElementById("gameCanvas");
+            canvas.onmouseover = function () {
+                _this.cursor.onMouseOverCanvas = true;
+            };
+            canvas.onmouseout = function () {
+                _this.cursor.onMouseOverCanvas = false;
+            };
             var generate = function () { _this.level.serialize(); };
             document.getElementById("generate").onclick = generate;
             var load = function (evt) {
@@ -3980,10 +3987,12 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
             this.cursor.display();
             for (var i = 0; i < this.level.Entities.length; i++) {
                 var curEntity = this.level.Entities[i];
-                if (curEntity instanceof Person_7.Person)
-                    this.draw.drawimage(curEntity.animation.getDefaultImage(), this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
-                if (curEntity instanceof StationaryObject_5.StationaryObject)
-                    this.draw.drawimage(curEntity.image, this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+                if (this.level.isCellInBounds(curEntity.body.center)) {
+                    if (curEntity instanceof Person_7.Person)
+                        this.draw.drawimage(curEntity.animation.getDefaultImage(), this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+                    if (curEntity instanceof StationaryObject_5.StationaryObject)
+                        this.draw.drawimage(curEntity.image, this.level.Entities[i].body.center, new geom.Vector(this.level.tileSize, this.level.tileSize), 0, 1);
+                }
             }
             ListOfPads_2.ListOfPads.GUIstep();
             EditorGUI_2.EditorGUI.display(this.draw);

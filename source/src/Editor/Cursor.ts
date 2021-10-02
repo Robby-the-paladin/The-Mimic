@@ -33,6 +33,7 @@ export enum Mode {
 // Курсор для редактора уровней. Хранит в себе позицию и
 // информацию о том, как должен вести себя в случае клика
 export class Cursor {
+    public onMouseOverCanvas = false;
     public level: Level;
     public draw: Draw;
     public pos = new geom.Vector();
@@ -125,7 +126,8 @@ export class Cursor {
     public step() {
         this.pos = this.draw.transformBack(Control.mousePos());
         this.gridPos = this.level.gridCoordinates(this.pos);
-        if (Control.isMouseLeftPressed() && this.level.isInBounds(this.pos)) {
+
+        if (Control.isMouseLeftPressed() && this.level.isInBounds(this.pos) && this.onMouseOverCanvas) {
             switch (this.mode) {
                 case Mode.Eraser: {
                     if (this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)] != null) {

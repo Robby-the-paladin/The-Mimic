@@ -190,7 +190,6 @@ export class ListOfPads {
         for (let i = 0; i < this.instructionCopy.operations.length; i++) {
             switch (this.instructionCopy.operations[i]) {
                 case Operations.goToPoint: {
-                    console.log(currentPos, this.instructionCopy.operationsData[i]);
                     let oldPos = currentPos;
                     EditorGUI.addLine(currentPos, this.instructionCopy.operationsData[i], new Color(0, 255, 0, 1));
                     currentPos = this.instructionCopy.operationsData[i];
