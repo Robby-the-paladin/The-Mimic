@@ -17,6 +17,7 @@ import { ListOfPads } from "./Editor/ListOfPads";
 import { EditorGUI } from "./Editor/EditorGUI";
 import { StationaryObject } from "./Entities/StationaryObject";
 import { Game } from "./Game";
+import * as aux from "./AuxLib";
 
 export class Editor {
     private mousePrev: geom.Vector;
@@ -45,6 +46,22 @@ export class Editor {
         this.level = level;
         this.cursor.level = level;
         this.level.showLighting = showLighting;
+        for (let i = 0; i < level.Entities.length; i++) {
+            let entity = level.Entities[i];
+            // setting entityLocations
+            let entityCoords = entity.body.center;
+            this.cursor.entityLocations[JSON.stringify(this.level.gridCoordinates(entityCoords), aux.replacer)] = i;
+
+            // setting behavior models
+            if (entity instanceof Person) {
+                let behmod = entity.behaviorModel;
+                let keys = Array.from(behmod.instructions.keys()); 
+                
+                for (let j = 0; j < keys.length; j++) {
+                    behmod.instructions[keys[j]] = behmod.instructions.get(keys[j]);
+                }
+            }
+        }
         console.log(level.Entities);
         
     }

@@ -3404,9 +3404,9 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
             this.tile = new Tile_5.Tile(Tile_5.CollisionType.Full);
             this.entity = new Entity_4.Entity(null, new Body_3.Body(new geom.Vector(0, 0), 1));
             this.selectedEntity = null;
+            this.entityLocations = new Map();
             this.mode = Mode.Wall;
             this.mouseLeftButtonClicked = true;
-            this.entityLocations = new Map();
             this.level = level;
             this.draw = draw;
         }
@@ -3511,6 +3511,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
                         if (this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)] != null) {
                             this.selectedEntity = this.level.Entities[this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)]];
                             if (this.selectedEntity instanceof Person_6.Person) {
+                                console.log(this.selectedEntity.behaviorModel);
                                 ListOfPads_1.ListOfPads.compileBehaviorModel(this.selectedEntity.behaviorModel);
                                 ListOfPads_1.ListOfPads.entityPos = this.selectedEntity.body.center;
                             }
@@ -3559,7 +3560,7 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
     }());
     exports.Cursor = Cursor;
 });
-define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject", "Game"], function (require, exports, Control_5, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5, Game_10) {
+define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Editor/Cursor", "Tile", "Entities/EntityAttributes/Body", "Entities/Soldier", "Entities/Scientist", "Entities/Person", "Entities/Monster", "Entities/EntityAttributes/Animation", "BehaviorModel", "Editor/ListOfPads", "Editor/EditorGUI", "Entities/StationaryObject", "Game", "AuxLib"], function (require, exports, Control_5, Draw_16, Level_2, geom, Cursor_2, Tile_6, Body_4, Soldier_4, Scientist_4, Person_7, Monster_6, Animation_5, BehaviorModel_6, ListOfPads_2, EditorGUI_2, StationaryObject_5, Game_10, aux) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Editor = void 0;
@@ -3586,6 +3587,18 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
             this.level = level;
             this.cursor.level = level;
             this.level.showLighting = showLighting;
+            for (var i = 0; i < level.Entities.length; i++) {
+                var entity = level.Entities[i];
+                var entityCoords = entity.body.center;
+                this.cursor.entityLocations[JSON.stringify(this.level.gridCoordinates(entityCoords), aux.replacer)] = i;
+                if (entity instanceof Person_7.Person) {
+                    var behmod = entity.behaviorModel;
+                    var keys = Array.from(behmod.instructions.keys());
+                    for (var j = 0; j < keys.length; j++) {
+                        behmod.instructions[keys[j]] = behmod.instructions.get(keys[j]);
+                    }
+                }
+            }
             console.log(level.Entities);
         };
         Editor.prototype.isTileSubImage = function (idPalette) {

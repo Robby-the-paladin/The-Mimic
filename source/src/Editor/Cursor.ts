@@ -41,9 +41,9 @@ export class Cursor {
     public entity = new Entity(null, new Body(new geom.Vector(0, 0), 1));
     public selectedEntity: Entity = null;
     public drawPreview: Draw;
+    public entityLocations: Map<any, number> = new Map();
     private mode = Mode.Wall;
     private mouseLeftButtonClicked = true;
-    private entityLocations: Map<any, number> = new Map();
 
     constructor(level: Level = null, draw: Draw = null) {
         this.level = level;
@@ -155,6 +155,8 @@ export class Cursor {
                     if (this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)] != null) {
                         this.selectedEntity = this.level.Entities[this.entityLocations[JSON.stringify(this.gridPos, aux.replacer)]];
                         if (this.selectedEntity instanceof Person) {
+                            console.log(this.selectedEntity.behaviorModel);
+                            
                             ListOfPads.compileBehaviorModel(this.selectedEntity.behaviorModel);
                             ListOfPads.entityPos = this.selectedEntity.body.center;
                         }
