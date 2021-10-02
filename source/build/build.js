@@ -3525,7 +3525,10 @@ define("Editor/Cursor", ["require", "exports", "Control", "Draw", "Entities/Enti
                         break;
                     }
                     case Mode.Light: {
-                        this.setLight();
+                        if (this.mouseLeftButtonClicked) {
+                            this.setLight();
+                            this.mouseLeftButtonClicked = false;
+                        }
                         break;
                     }
                 }

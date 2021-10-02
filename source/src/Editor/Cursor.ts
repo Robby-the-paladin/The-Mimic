@@ -173,7 +173,10 @@ export class Cursor {
                     break;
                 }
                 case Mode.Light: {
-                    this.setLight();
+                    if (this.mouseLeftButtonClicked) {
+                        this.setLight();
+                        this.mouseLeftButtonClicked = false;
+                    }
                     break;
                 }
             }
