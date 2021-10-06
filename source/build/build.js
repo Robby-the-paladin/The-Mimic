@@ -4099,7 +4099,14 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             var e2 = new Edge(c1, c3);
             this.circles = [c1, c2, c3];
             this.edges = [e1, e2];
+            document.getElementById("addVertex").addEventListener("click", function () { globalEditor.addVert = true; });
         }
+        globalEditor.prototype.addVertex = function () {
+            console.log("vertex added");
+            var pos = this.drawObj.transformBack(this.drawObj.cam.center);
+            this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex", new Draw_17.Color(100, 100, 0), new Draw_17.Color(0, 0, 0)));
+            this.arrmove(this.circles, this.circles.length - 1, 0);
+        };
         globalEditor.prototype.isInCanvas = function (mouseCoords) {
             if (document.getElementById("gameCanvas").clientLeft <= mouseCoords.x
                 && mouseCoords.x <= document.getElementById("gameCanvas")["height"]
@@ -4139,7 +4146,6 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.getMousePosition();
             if (this.focused.state) {
                 var pos = this.drawObj.transformBack(new geom.Vector(this.mousePosition.x, this.mousePosition.y));
-                console.log(this.drawObj.canvas.width, this.drawObj.canvas.height, pos.x, pos.y);
                 var left = (-this.drawObj.cam.center.x) / this.drawObj.cam.scale;
                 var right = (this.drawObj.canvas.width - this.drawObj.cam.center.x) / this.drawObj.cam.scale;
                 var up = (-this.drawObj.cam.center.y) / this.drawObj.cam.scale;
@@ -4162,6 +4168,10 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.drawVertex();
             this.moveCamera();
             this.move();
+            if (globalEditor.addVert) {
+                globalEditor.addVert = false;
+                this.addVertex();
+            }
         };
         globalEditor.prototype.arrmove = function (arr, old_index, new_index) {
             if (new_index >= arr.length) {
@@ -4192,6 +4202,7 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
                 y: Control_6.Control.mousePos().y
             };
         };
+        globalEditor.addVert = false;
         return globalEditor;
     }());
     exports.globalEditor = globalEditor;

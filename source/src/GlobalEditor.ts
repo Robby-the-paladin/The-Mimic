@@ -28,20 +28,20 @@ export class Vertex {
         drawObj.fillCircle(new geom.Vector(this.x, this.y), this.r, this.fill);
         drawObj.strokeCircle(new geom.Vector(this.x, this.y), this.r, this.stroke, 3);
         drawObj.drawText(this.text, drawObj.transform(new geom.Vector(this.x, this.y)),
-        "20px serif", new Color(255, 255, 255), false, undefined,
-        undefined, undefined, drawObj.cam.scale * this.r * 2);
+            "20px serif", new Color(255, 255, 255), false, undefined,
+            undefined, undefined, drawObj.cam.scale * this.r * 2);
     }
 }
 export class Edge {
-    public begin : Vertex;
-    public end : Vertex;
+    public begin: Vertex;
+    public end: Vertex;
 
-    constructor(begin : Vertex, end : Vertex) {
+    constructor(begin: Vertex, end: Vertex) {
         this.begin = begin;
         this.end = end;
     }
 
-    public draw(drawObj : Draw) {
+    public draw(drawObj: Draw) {
         let fromx = this.begin.x;
         let fromy = this.begin.y;
         let dx = this.end.x - this.begin.x;
@@ -55,6 +55,7 @@ export class Edge {
 
 export class globalEditor {
     private mousePrev: geom.Vector;
+    private static addVert = false;
 
     public circles: Vertex[];
     public edges: Edge[];
@@ -75,6 +76,15 @@ export class globalEditor {
 
     public drawObj: Draw;
 
+    private addVertex() {
+        console.log("vertex added");
+        
+        let pos = this.drawObj.transformBack(this.drawObj.cam.center);
+        this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex",
+            new Color(100, 100, 0), new Color(0, 0, 0)));
+        this.arrmove(this.circles, this.circles.length - 1, 0);
+    }
+
     constructor(drawObj: Draw) {
         this.drawObj = drawObj;
 
@@ -91,6 +101,8 @@ export class globalEditor {
         //initialise our circles
         this.circles = [c1, c2, c3];
         this.edges = [e1, e2];
+
+        document.getElementById("addVertex").addEventListener("click", () => { globalEditor.addVert = true });
     }
 
     private isInCanvas(mouseCoords: geom.Vector): boolean {
@@ -104,11 +116,10 @@ export class globalEditor {
     }
 
     // Двигает камеру в соответствии с движениями мышки
-    private moveCamera() {        
+    private moveCamera() {
         // Сохраняем текущие координаты мыши
         let mouseCoords = Control.mousePos().clone();
         // Двигаем камеру
-        // console.log(document.getElementById("gameCanvas").clientTop)
         if (this.isInCanvas(mouseCoords)) {
             this.drawObj.cam.scale *= Math.pow(1.001, -Control.wheelDelta());
         } else {
@@ -135,18 +146,17 @@ export class globalEditor {
     }
 
     private move() {
-        
+
         this.isMouseDown = Control.isMouseLeftPressed();
-        if (!this.isMouseDown) {            
+        if (!this.isMouseDown) {
             this.focused.state = false;
             return;
         }
         this.getMousePosition();
-                
+
         //if any circle is focused
         if (this.focused.state) {
             let pos = this.drawObj.transformBack(new geom.Vector(this.mousePosition.x, this.mousePosition.y));
-            console.log(this.drawObj.canvas.width, this.drawObj.canvas.height, pos.x, pos.y);
             let left = (-this.drawObj.cam.center.x) / this.drawObj.cam.scale;
             let right = (this.drawObj.canvas.width - this.drawObj.cam.center.x) / this.drawObj.cam.scale;
             let up = (-this.drawObj.cam.center.y) / this.drawObj.cam.scale;
@@ -174,6 +184,11 @@ export class globalEditor {
         this.drawVertex();
         this.moveCamera();
         this.move();
+
+        if (globalEditor.addVert) {
+            globalEditor.addVert = false;
+            this.addVertex();
+        }
     }
 
     public arrmove(arr, old_index, new_index) {
