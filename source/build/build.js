@@ -2719,7 +2719,7 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             this.cam.pos = this.cam.center;
             this.cam.scale = 1;
         };
-        Draw.prototype.drawText = function (text, pos, font, color, outline, outlineColor, align, baseline) {
+        Draw.prototype.drawText = function (text, pos, font, color, outline, outlineColor, align, baseline, maxWidth) {
             if (font == undefined) {
                 font = "48px serif";
             }
@@ -2744,9 +2744,16 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             this.ctx.font = font;
             this.ctx.textAlign = align;
             this.ctx.textBaseline = baseline;
-            this.ctx.fillText(text, pos.x, pos.y);
-            if (outline)
-                this.ctx.strokeText(text, pos.x, pos.y);
+            if (maxWidth) {
+                this.ctx.fillText(text, pos.x, pos.y, maxWidth);
+                if (outline)
+                    this.ctx.strokeText(text, pos.x, pos.y, maxWidth);
+            }
+            else {
+                this.ctx.fillText(text, pos.x, pos.y);
+                if (outline)
+                    this.ctx.strokeText(text, pos.x, pos.y);
+            }
         };
         Draw.prototype.drawimage = function (image, pos, box, angle, transparency) {
             var posNew = this.transform(pos);
@@ -2923,6 +2930,27 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             this.ctx.closePath();
             this.ctx.lineWidth = lineWidth;
             this.ctx.strokeStyle = color.toString();
+            this.ctx.stroke();
+        };
+        Draw.prototype.arrow = function (begin, end) {
+            begin = this.transform(begin);
+            end = this.transform(end);
+            this.ctx.beginPath();
+            this.ctx.moveTo(begin.x, begin.y);
+            this.ctx.lineTo(end.x, end.y);
+            var headlen = 20 * this.cam.scale;
+            var dx = end.x - begin.x;
+            var dy = end.y - begin.y;
+            var angle = Math.atan2(dy, dx);
+            var tox = end.x;
+            var toy = end.y;
+            this.ctx.moveTo(tox, toy);
+            this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            this.ctx.moveTo(tox, toy);
+            this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+            this.ctx.closePath();
+            this.ctx.lineWidth = 5 * this.cam.scale;
+            this.ctx.strokeStyle = new Color(0, 255, 0).toString();
             this.ctx.stroke();
         };
         Draw.prototype.strokePolygon = function (vertices, color, lineWidth) {
@@ -4012,32 +4040,130 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
     }());
     exports.Editor = Editor;
 });
-define("GlobalEditor", ["require", "exports"], function (require, exports) {
+define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], function (require, exports, Draw_17, geom, Control_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.global = void 0;
-    function global() {
-        function intersects(circle) {
-            var areaX = mousePosition.x - circle.x;
-            var areaY = mousePosition.y - circle.y;
-            return areaX * areaX + areaY * areaY <= circle.r * circle.r;
+    exports.globalEditor = exports.Edge = exports.Vertex = void 0;
+    var Vertex = (function () {
+        function Vertex(x, y, r, text, fill, stroke) {
+            this.startingAngle = 0;
+            this.endAngle = 2 * Math.PI;
+            this.x = x;
+            this.y = y;
+            this.r = r;
+            this.text = text;
+            this.fill = fill;
+            this.stroke = stroke;
         }
-        var mousePosition;
-        var isMouseDown;
-        var c = document.getElementById("gameCanvas");
-        var ctx = c.getContext("2d");
-        document.addEventListener('mousemove', move, false);
-        document.addEventListener('mousedown', setDraggable, false);
-        document.addEventListener('mouseup', setDraggable, false);
-        var c1 = new Circle(50, 50, 50, "red", "black");
-        var c2 = new Circle(200, 50, 50, "green", "black");
-        var c3 = new Circle(350, 50, 50, "blue", "black");
-        var circles = [c1, c2, c3];
-        function draw() {
-            ctx.clearRect(0, 0, c.width, c.height);
-            drawCircles();
+        Vertex.prototype.draw = function (drawObj) {
+            drawObj.fillCircle(new geom.Vector(this.x, this.y), this.r, this.fill);
+            drawObj.strokeCircle(new geom.Vector(this.x, this.y), this.r, this.stroke, 3);
+            drawObj.drawText(this.text, drawObj.transform(new geom.Vector(this.x, this.y)), "20px serif", new Draw_17.Color(255, 255, 255), false, undefined, undefined, undefined, drawObj.cam.scale * this.r * 2);
+        };
+        return Vertex;
+    }());
+    exports.Vertex = Vertex;
+    var Edge = (function () {
+        function Edge(begin, end) {
+            this.begin = begin;
+            this.end = end;
         }
-        function arrmove(arr, old_index, new_index) {
+        Edge.prototype.draw = function (drawObj) {
+            var fromx = this.begin.x;
+            var fromy = this.begin.y;
+            var dx = this.end.x - this.begin.x;
+            var dy = this.end.y - this.begin.y;
+            var angle = Math.atan2(dy, dx);
+            var tox = this.end.x - this.end.r * Math.cos(angle);
+            var toy = this.end.y - this.end.r * Math.sin(angle);
+            drawObj.arrow(new geom.Vector(fromx, fromy), new geom.Vector(tox, toy));
+        };
+        return Edge;
+    }());
+    exports.Edge = Edge;
+    var globalEditor = (function () {
+        function globalEditor(drawObj) {
+            this.c = document.getElementById("gameCanvas");
+            this.ctx = this.c.getContext("2d");
+            this.focused = {
+                key: 0,
+                state: false
+            };
+            this.drawObj = drawObj;
+            this.drawObj.cam.scale = 0.5;
+            this.mousePrev = Control_6.Control.mousePos();
+            var c1 = new Vertex(50, 50, 50, "c1 veeery looooong text", new Draw_17.Color(255, 0, 0), new Draw_17.Color(0, 0, 0));
+            var c2 = new Vertex(200, 50, 50, "c2 text", new Draw_17.Color(0, 255, 0), new Draw_17.Color(0, 0, 0));
+            var c3 = new Vertex(350, 50, 50, "c3", new Draw_17.Color(0, 0, 255), new Draw_17.Color(0, 0, 0));
+            var e1 = new Edge(c1, c2);
+            var e2 = new Edge(c1, c3);
+            this.circles = [c1, c2, c3];
+            this.edges = [e1, e2];
+        }
+        globalEditor.prototype.isInCanvas = function (mouseCoords) {
+            if (document.getElementById("gameCanvas").clientLeft <= mouseCoords.x
+                && mouseCoords.x <= document.getElementById("gameCanvas")["height"]
+                && document.getElementById("gameCanvas").clientTop <= mouseCoords.y
+                && mouseCoords.y <= document.getElementById("gameCanvas")["width"]) {
+                return true;
+            }
+            return false;
+        };
+        globalEditor.prototype.moveCamera = function () {
+            var mouseCoords = Control_6.Control.mousePos().clone();
+            if (this.isInCanvas(mouseCoords)) {
+                this.drawObj.cam.scale *= Math.pow(1.001, -Control_6.Control.wheelDelta());
+            }
+            else {
+                Control_6.Control.clearWheelDelta();
+            }
+            if (Control_6.Control.isMouseRightPressed() && this.isInCanvas(mouseCoords)) {
+                var delta = mouseCoords.sub(this.mousePrev);
+                this.drawObj.cam.pos = this.drawObj.cam.pos.sub(delta.mul(1 / this.drawObj.cam.scale));
+            }
+            this.mousePrev = mouseCoords.clone();
+        };
+        globalEditor.prototype.intersects = function (circle) {
+            var coords = this.drawObj.transform(new geom.Vector(circle.x, circle.y));
+            var r = circle.r * this.drawObj.cam.scale;
+            var areaX = this.mousePosition.x - coords.x;
+            var areaY = this.mousePosition.y - coords.y;
+            return areaX * areaX + areaY * areaY <= r * r;
+        };
+        globalEditor.prototype.move = function () {
+            this.isMouseDown = Control_6.Control.isMouseLeftPressed();
+            if (!this.isMouseDown) {
+                this.focused.state = false;
+                return;
+            }
+            this.getMousePosition();
+            if (this.focused.state) {
+                var pos = this.drawObj.transformBack(new geom.Vector(this.mousePosition.x, this.mousePosition.y));
+                console.log(this.drawObj.canvas.width, this.drawObj.canvas.height, pos.x, pos.y);
+                var left = (-this.drawObj.cam.center.x) / this.drawObj.cam.scale;
+                var right = (this.drawObj.canvas.width - this.drawObj.cam.center.x) / this.drawObj.cam.scale;
+                var up = (-this.drawObj.cam.center.y) / this.drawObj.cam.scale;
+                var down = (this.drawObj.canvas.height - this.drawObj.cam.center.y) / this.drawObj.cam.scale;
+                this.circles[this.focused.key].x = Math.max(left, Math.min(pos.x, right));
+                this.circles[this.focused.key].y = Math.max(up, Math.min(pos.y, down));
+                return;
+            }
+            for (var i = 0; i < this.circles.length; i++) {
+                if (this.intersects(this.circles[i])) {
+                    this.arrmove(this.circles, i, 0);
+                    this.focused.state = true;
+                    break;
+                }
+            }
+        };
+        globalEditor.prototype.step = function () {
+            this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+            this.drawEdges();
+            this.drawVertex();
+            this.moveCamera();
+            this.move();
+        };
+        globalEditor.prototype.arrmove = function (arr, old_index, new_index) {
             if (new_index >= arr.length) {
                 var k = new_index - arr.length;
                 while ((k--) + 1) {
@@ -4045,78 +4171,30 @@ define("GlobalEditor", ["require", "exports"], function (require, exports) {
                 }
             }
             arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
-        }
-        ;
-        function drawCircles() {
-            for (var i = circles.length - 1; i >= 0; i--) {
-                circles[i].draw();
-            }
-        }
-        var focused = {
-            key: 0,
-            state: false
         };
-        function Circle(x, y, r, fill, stroke) {
-            this.startingAngle = 0;
-            this.endAngle = 2 * Math.PI;
-            this.x = x;
-            this.y = y;
-            this.r = r;
-            this.fill = fill;
-            this.stroke = stroke;
-            this.draw = function () {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, this.startingAngle, this.endAngle);
-                ctx.fillStyle = this.fill;
-                ctx.lineWidth = 3;
-                ctx.fill();
-                ctx.strokeStyle = this.stroke;
-                ctx.stroke();
+        globalEditor.prototype.drawVertex = function () {
+            for (var i = this.circles.length - 1; i >= 0; i--) {
+                this.circles[i].draw(this.drawObj);
+            }
+        };
+        globalEditor.prototype.drawEdges = function () {
+            for (var i = this.edges.length - 1; i >= 0; i--) {
+                this.edges[i].draw(this.drawObj);
+            }
+        };
+        globalEditor.prototype.releaseFocus = function () {
+            this.focused.state = false;
+        };
+        globalEditor.prototype.getMousePosition = function () {
+            var rect = this.c.getBoundingClientRect();
+            this.mousePosition = {
+                x: Control_6.Control.mousePos().x,
+                y: Control_6.Control.mousePos().y
             };
-        }
-        function move(e) {
-            if (!isMouseDown) {
-                return;
-            }
-            getMousePosition(e);
-            if (focused.state) {
-                circles[focused.key].x = mousePosition.x;
-                circles[focused.key].y = mousePosition.y;
-                draw();
-                return;
-            }
-            for (var i = 0; i < circles.length; i++) {
-                if (intersects(circles[i])) {
-                    arrmove(circles, i, 0);
-                    focused.state = true;
-                    break;
-                }
-            }
-            draw();
-        }
-        function setDraggable(e) {
-            var t = e.type;
-            if (t === "mousedown") {
-                isMouseDown = true;
-            }
-            else if (t === "mouseup") {
-                isMouseDown = false;
-                releaseFocus();
-            }
-        }
-        function releaseFocus() {
-            focused.state = false;
-        }
-        function getMousePosition(e) {
-            var rect = c.getBoundingClientRect();
-            mousePosition = {
-                x: Math.round(e.x - rect.left),
-                y: Math.round(e.y - rect.top)
-            };
-        }
-        draw();
-    }
-    exports.global = global;
+        };
+        return globalEditor;
+    }());
+    exports.globalEditor = globalEditor;
 });
 define("LevelGraph", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -4129,22 +4207,22 @@ define("LevelGraph", ["require", "exports"], function (require, exports) {
     }());
     exports.Edge = Edge;
 });
-define("Main", ["require", "exports", "AuxLib", "Draw", "Game", "GlobalEditor"], function (require, exports, aux, Draw_17, Game_11, GlobalEditor_1) {
+define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor", "GlobalEditor"], function (require, exports, geom, aux, Draw_18, Game_11, Editor_1, GlobalEditor_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/");
-    var levelEditorMode = (document.getElementById("mode").innerHTML == "editor");
+    var levelEditorMode = (document.getElementById("mode").innerHTML != "game");
+    var globalEditorMode = (document.getElementById("mode").innerHTML == "global_editor");
     aux.setEditorMode(levelEditorMode);
     var canvas = document.getElementById('gameCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    var draw = new Draw_17.Draw(canvas);
+    var draw = new Draw_18.Draw(canvas);
     draw.cam.scale = 10;
     var game = new Game_11.Game(draw);
     game.levels = new Map();
     game.levelBackups = new Map();
     Game_11.Game.currentGame = game;
-    Game_11.Game.loadMap("map.json", "map");
     var x = false;
     var t = 0;
     function step() {
@@ -4162,6 +4240,30 @@ define("Main", ["require", "exports", "AuxLib", "Draw", "Game", "GlobalEditor"],
             game.display();
         }
     }
-    GlobalEditor_1.global();
+    if (levelEditorMode) {
+        if (globalEditorMode) {
+            draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
+            var global_1 = new GlobalEditor_1.globalEditor(draw);
+            var globalEditorStep = function () {
+                global_1.step();
+            };
+            setInterval(globalEditorStep, 20);
+        }
+        else {
+            var editor_1 = new Editor_1.Editor();
+            editor_1.setDraw(draw);
+            editor_1.draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
+            var editorStep = function () {
+                editor_1.step();
+                draw.clear();
+                editor_1.display();
+            };
+            setInterval(editorStep, 20);
+        }
+    }
+    else {
+        setInterval(step, Game_11.Game.dt * 1000);
+        Game_11.Game.loadMap("map.json", "map");
+    }
 });
 //# sourceMappingURL=build.js.map

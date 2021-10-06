@@ -108,7 +108,7 @@ export class Draw {
         return image;
     }
     // Преобразование координат
-    private transform(pos: geom.Vector): geom.Vector {
+    public transform(pos: geom.Vector): geom.Vector {
         let posNew = pos.clone();
         posNew = posNew.sub(this.cam.pos);
         posNew = posNew.mul(this.cam.scale);
@@ -136,7 +136,7 @@ export class Draw {
     }
 
     public drawText(text: string, pos: geom.Vector, font?: string, color?: Color, outline?: boolean, outlineColor?: Color,
-        align?: CanvasTextAlign, baseline?: CanvasTextBaseline) {
+        align?: CanvasTextAlign, baseline?: CanvasTextBaseline, maxWidth?: number) {
         if (font == undefined) {
             font = "48px serif";
         } 
@@ -161,9 +161,15 @@ export class Draw {
         this.ctx.font = font;
         this.ctx.textAlign = align;
         this.ctx.textBaseline = baseline;
-        this.ctx.fillText(text, pos.x, pos.y);
-        if (outline)
-            this.ctx.strokeText(text, pos.x, pos.y);
+        if (maxWidth) {
+            this.ctx.fillText(text, pos.x, pos.y, maxWidth);
+            if (outline)
+                this.ctx.strokeText(text, pos.x, pos.y, maxWidth);
+        } else {
+            this.ctx.fillText(text, pos.x, pos.y);
+            if (outline)
+                this.ctx.strokeText(text, pos.x, pos.y);
+        }
     }
     // Функция для отрисовки изображения
     public drawimage(image: HTMLImageElement, pos: geom.Vector, box: geom.Vector, angle: number, transparency: number) {
@@ -352,6 +358,27 @@ export class Draw {
         this.ctx.closePath();
         this.ctx.lineWidth = lineWidth;
         this.ctx.strokeStyle = color.toString();
+        this.ctx.stroke();
+    }
+    public arrow(begin: geom.Vector, end: geom.Vector) {
+        begin = this.transform(begin);
+        end = this.transform(end);
+        this.ctx.beginPath();
+        this.ctx.moveTo(begin.x, begin.y);
+        this.ctx.lineTo(end.x, end.y);
+        let headlen = 20 * this.cam.scale;
+        var dx = end.x - begin.x;
+        var dy = end.y - begin.y;
+        var angle = Math.atan2(dy, dx);
+        let tox = end.x;
+        let toy = end.y;
+        this.ctx.moveTo(tox, toy);
+        this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        this.ctx.moveTo(tox, toy);       
+        this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        this.ctx.closePath();
+        this.ctx.lineWidth = 5 * this.cam.scale;
+        this.ctx.strokeStyle = new Color(0, 255, 0).toString();
         this.ctx.stroke();
     }
     // Контур многоугольника

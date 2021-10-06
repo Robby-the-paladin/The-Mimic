@@ -9,13 +9,14 @@ import { Person } from "./Entities/Person";
 import { Scientist } from "./Entities/Scientist";
 import { Behavior } from "./Entities/Person";
 import { Ray } from "./RayCasting"
-import { global } from "./GlobalEditor";
+import { globalEditor } from "./GlobalEditor";
 
 aux.setEnvironment("https://raw.githubusercontent.com/Robby-the-paladin/The-Mimic/Interactive/source/env/"); // Если с Гита
 //aux.setEnvironment("http://127.0.0.1:8000/"); // Если локальный сервер
 
 // Флаг режима редактора уровней
-let levelEditorMode = (document.getElementById("mode").innerHTML == "editor");
+let levelEditorMode = (document.getElementById("mode").innerHTML != "game");
+let globalEditorMode = (document.getElementById("mode").innerHTML == "global_editor");
 aux.setEditorMode(levelEditorMode);
 let canvas: HTMLCanvasElement = document.getElementById('gameCanvas') as HTMLCanvasElement;
 canvas.width = window.innerWidth;
@@ -26,7 +27,6 @@ let game = new Game(draw);
 game.levels = new Map();
 game.levelBackups = new Map();
 Game.currentGame = game;
-Game.loadMap("map.json", "map");
 let x = false;
 let t = 0;
 
@@ -56,18 +56,30 @@ function step() {
         game.display();
     }
 }
-global();
-// if (levelEditorMode) {
-//     // В случае если режим редактора
-//     let editor = new Editor();
-//     editor.setDraw(draw);
-//     editor.draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
-//     let editorStep = function () {
-//         editor.step();
-//         draw.clear();
-//         editor.display();
-//     }
-//     setInterval(editorStep, 20);
-// }
-// else
-//     setInterval(step, Game.dt * 1000);
+
+if (levelEditorMode) {
+    // В случае если режим редактора
+    if (globalEditorMode) {
+        draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
+        let global = new globalEditor(draw);
+        let globalEditorStep = function () {
+            global.step();
+        }
+        setInterval(globalEditorStep, 20);
+    }
+    else {
+        let editor = new Editor();
+        editor.setDraw(draw);
+        editor.draw.resize(new geom.Vector(window.innerHeight - 30, window.innerHeight - 30));
+        let editorStep = function () {
+            editor.step();
+            draw.clear();
+            editor.display();
+        }
+        setInterval(editorStep, 20);
+    }
+}
+else {
+    setInterval(step, Game.dt * 1000);
+    Game.loadMap("map.json", "map");
+}
