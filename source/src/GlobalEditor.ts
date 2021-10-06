@@ -85,6 +85,12 @@ export class globalEditor {
         this.arrmove(this.circles, this.circles.length - 1, 0);
     }
 
+    public initHTML() {
+        document.getElementById("addVertex").addEventListener("click", () => { globalEditor.addVert = true });
+
+        document.getElementById("tools")["style"].left = window.innerHeight + 20 + "px";
+    }
+
     constructor(drawObj: Draw) {
         this.drawObj = drawObj;
 
@@ -93,16 +99,16 @@ export class globalEditor {
 
         //make some circles
         let c1 = new Vertex(50, 50, 50, "c1 veeery looooong text", new Color(255, 0, 0), new Color(0, 0, 0));
-        let c2 = new Vertex(200, 50, 50, "c2 text", new Color(0, 255, 0), new Color(0, 0, 0));
+        //let c2 = new Vertex(200, 50, 50, "c2 text", new Color(0, 255, 0), new Color(0, 0, 0));
         let c3 = new Vertex(350, 50, 50, "c3", new Color(0, 0, 255), new Color(0, 0, 0));
-        let e1 = new Edge(c1, c2);
+        //let e1 = new Edge(c1, c2);
         let e2 = new Edge(c1, c3);
 
         //initialise our circles
-        this.circles = [c1, c2, c3];
-        this.edges = [e1, e2];
+        this.circles = [c1, c3];
+        this.edges = [e2];
 
-        document.getElementById("addVertex").addEventListener("click", () => { globalEditor.addVert = true });
+        this.initHTML();
     }
 
     private isInCanvas(mouseCoords: geom.Vector): boolean {
@@ -157,13 +163,13 @@ export class globalEditor {
         //if any circle is focused
         if (this.focused.state) {
             let pos = this.drawObj.transformBack(new geom.Vector(this.mousePosition.x, this.mousePosition.y));
-            let left = (-this.drawObj.cam.center.x) / this.drawObj.cam.scale;
-            let right = (this.drawObj.canvas.width - this.drawObj.cam.center.x) / this.drawObj.cam.scale;
-            let up = (-this.drawObj.cam.center.y) / this.drawObj.cam.scale;
-            let down = (this.drawObj.canvas.height - this.drawObj.cam.center.y) / this.drawObj.cam.scale;
+            let min = new geom.Vector(document.getElementById("gameCanvas").clientLeft, document.getElementById("gameCanvas").clientTop);
+            let max = new geom.Vector(document.getElementById("gameCanvas")["width"], document.getElementById("gameCanvas")["height"]);
+            min = this.drawObj.transformBack(min);
+            max = this.drawObj.transformBack(max);
 
-            this.circles[this.focused.key].x = Math.max(left, Math.min(pos.x, right));
-            this.circles[this.focused.key].y = Math.max(up, Math.min(pos.y, down));
+            this.circles[this.focused.key].x = Math.max(min.x, Math.min(pos.x, max.x));
+            this.circles[this.focused.key].y = Math.max(min.y, Math.min(pos.y, max.y));
             return;
         }
         //no circle currently focused check if circle is hovered

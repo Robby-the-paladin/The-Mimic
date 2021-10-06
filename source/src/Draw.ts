@@ -363,6 +363,7 @@ export class Draw {
     public arrow(begin: geom.Vector, end: geom.Vector) {
         begin = this.transform(begin);
         end = this.transform(end);
+        this.ctx.lineWidth = 5 * this.cam.scale;
         this.ctx.beginPath();
         this.ctx.moveTo(begin.x, begin.y);
         this.ctx.lineTo(end.x, end.y);
@@ -374,10 +375,13 @@ export class Draw {
         let toy = end.y;
         this.ctx.moveTo(tox, toy);
         this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        console.log(headlen);        
         this.ctx.moveTo(tox, toy);       
         this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        
         this.ctx.closePath();
-        this.ctx.lineWidth = 5 * this.cam.scale;
+        console.log(Math.cos(angle - Math.PI / 6), Math.cos(angle + Math.PI / 6), Math.sin(angle - Math.PI / 6), Math.sin(angle + Math.PI / 6));
+        this.ctx.fillStyle = new Color(0, 0, 0).toString();
         this.ctx.strokeStyle = new Color(0, 255, 0).toString();
         this.ctx.stroke();
     }

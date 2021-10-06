@@ -2935,6 +2935,7 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
         Draw.prototype.arrow = function (begin, end) {
             begin = this.transform(begin);
             end = this.transform(end);
+            this.ctx.lineWidth = 5 * this.cam.scale;
             this.ctx.beginPath();
             this.ctx.moveTo(begin.x, begin.y);
             this.ctx.lineTo(end.x, end.y);
@@ -2946,10 +2947,12 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             var toy = end.y;
             this.ctx.moveTo(tox, toy);
             this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            console.log(headlen);
             this.ctx.moveTo(tox, toy);
             this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
             this.ctx.closePath();
-            this.ctx.lineWidth = 5 * this.cam.scale;
+            console.log(Math.cos(angle - Math.PI / 6), Math.cos(angle + Math.PI / 6), Math.sin(angle - Math.PI / 6), Math.sin(angle + Math.PI / 6));
+            this.ctx.fillStyle = new Color(0, 0, 0).toString();
             this.ctx.strokeStyle = new Color(0, 255, 0).toString();
             this.ctx.stroke();
         };
@@ -4093,19 +4096,21 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.drawObj.cam.scale = 0.5;
             this.mousePrev = Control_6.Control.mousePos();
             var c1 = new Vertex(50, 50, 50, "c1 veeery looooong text", new Draw_17.Color(255, 0, 0), new Draw_17.Color(0, 0, 0));
-            var c2 = new Vertex(200, 50, 50, "c2 text", new Draw_17.Color(0, 255, 0), new Draw_17.Color(0, 0, 0));
             var c3 = new Vertex(350, 50, 50, "c3", new Draw_17.Color(0, 0, 255), new Draw_17.Color(0, 0, 0));
-            var e1 = new Edge(c1, c2);
             var e2 = new Edge(c1, c3);
-            this.circles = [c1, c2, c3];
-            this.edges = [e1, e2];
-            document.getElementById("addVertex").addEventListener("click", function () { globalEditor.addVert = true; });
+            this.circles = [c1, c3];
+            this.edges = [e2];
+            this.initHTML();
         }
         globalEditor.prototype.addVertex = function () {
             console.log("vertex added");
             var pos = this.drawObj.transformBack(this.drawObj.cam.center);
             this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex", new Draw_17.Color(100, 100, 0), new Draw_17.Color(0, 0, 0)));
             this.arrmove(this.circles, this.circles.length - 1, 0);
+        };
+        globalEditor.prototype.initHTML = function () {
+            document.getElementById("addVertex").addEventListener("click", function () { globalEditor.addVert = true; });
+            document.getElementById("tools")["style"].left = window.innerHeight + 20 + "px";
         };
         globalEditor.prototype.isInCanvas = function (mouseCoords) {
             if (document.getElementById("gameCanvas").clientLeft <= mouseCoords.x
@@ -4146,12 +4151,12 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.getMousePosition();
             if (this.focused.state) {
                 var pos = this.drawObj.transformBack(new geom.Vector(this.mousePosition.x, this.mousePosition.y));
-                var left = (-this.drawObj.cam.center.x) / this.drawObj.cam.scale;
-                var right = (this.drawObj.canvas.width - this.drawObj.cam.center.x) / this.drawObj.cam.scale;
-                var up = (-this.drawObj.cam.center.y) / this.drawObj.cam.scale;
-                var down = (this.drawObj.canvas.height - this.drawObj.cam.center.y) / this.drawObj.cam.scale;
-                this.circles[this.focused.key].x = Math.max(left, Math.min(pos.x, right));
-                this.circles[this.focused.key].y = Math.max(up, Math.min(pos.y, down));
+                var min = new geom.Vector(document.getElementById("gameCanvas").clientLeft, document.getElementById("gameCanvas").clientTop);
+                var max = new geom.Vector(document.getElementById("gameCanvas")["width"], document.getElementById("gameCanvas")["height"]);
+                min = this.drawObj.transformBack(min);
+                max = this.drawObj.transformBack(max);
+                this.circles[this.focused.key].x = Math.max(min.x, Math.min(pos.x, max.x));
+                this.circles[this.focused.key].y = Math.max(min.y, Math.min(pos.y, max.y));
                 return;
             }
             for (var i = 0; i < this.circles.length; i++) {
