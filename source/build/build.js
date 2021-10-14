@@ -2654,6 +2654,19 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
         Color.prototype.setAlpha = function (a) {
             return new Color(this.r, this.g, this.b, a);
         };
+        Color.prototype.toHEX = function () {
+            var HEX = function (c) {
+                var hex = c.toString(16);
+                return hex.length == 1 ? "0" + hex : hex;
+            };
+            return "#" + HEX(this.r) + HEX(this.g) + HEX(this.b);
+        };
+        Color.prototype.fromHEX = function (str) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(str);
+            this.r = parseInt(result[1], 16);
+            this.g = parseInt(result[2], 16);
+            this.b = parseInt(result[3], 16);
+        };
         return Color;
     }());
     exports.Color = Color;
@@ -4094,6 +4107,8 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
     var globalEditor = (function () {
         function globalEditor(drawObj) {
             this.settingsMode = SettingsMode.None;
+            this.buttonFunc = null;
+            this.curVertex = null;
             this.c = document.getElementById("gameCanvas");
             this.ctx = this.c.getContext("2d");
             this.focused = {
@@ -4110,6 +4125,19 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.edges = [e2];
             this.initHTML();
         }
+        globalEditor.prototype.getName = function (name, k) {
+            if (k === void 0) { k = 0; }
+            var n = name;
+            if (k != 0) {
+                n += "(" + k.toString() + ")";
+            }
+            for (var i = 0; i < this.circles.length; i++) {
+                if (n == this.circles[i].text) {
+                    return this.getName(name, k + 1);
+                }
+            }
+            return n;
+        };
         globalEditor.prototype.changeSettingsMode = function (mode) {
             switch (this.settingsMode) {
                 case SettingsMode.Edge: {
@@ -4139,8 +4167,15 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
         };
         globalEditor.prototype.addVertex = function () {
             var pos = this.drawObj.transformBack(this.drawObj.cam.center);
-            this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex", new Draw_17.Color(100, 100, 0), new Draw_17.Color(0, 0, 0)));
+            var vertex = new Vertex(pos.x, pos.y, 50, this.getName("New vertex"), new Draw_17.Color(100, 100, 0), new Draw_17.Color(0, 0, 0));
+            this.circles.push(vertex);
             this.arrmove(this.circles, this.circles.length - 1, 0);
+            this.changeSettingsMode(SettingsMode.Vertex);
+            var e = document.getElementById("vertexColor");
+            this.curVertex = vertex;
+            e.value = vertex.fill.toHEX();
+            e = document.getElementById("vertexText");
+            e.value = vertex.text;
         };
         globalEditor.prototype.addEdge = function () {
             var _this = this;
@@ -4149,7 +4184,6 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             }
             var vertex = this.circles[0];
             var edge = new Edge(vertex, vertex);
-            console.log("pushing", edge);
             this.edges.push(edge);
             this.changeSettingsMode(SettingsMode.Edge);
             var x = document.getElementById("edgeBeginInput");
@@ -4158,7 +4192,6 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             y.value = edge.end.text;
             var changeBeginInput = function () {
                 var newName = x.value;
-                console.log("change beg", newName);
                 for (var i = 0; i < _this.circles.length; i++) {
                     if (_this.circles[i].text == newName) {
                         edge.begin = _this.circles[i];
@@ -4189,8 +4222,23 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
                     y.blur();
                 }
             });
+            document.getElementById("edgeBeginClick").onclick = function () {
+                _this.buttonFunc = function (text) {
+                    x.value = text;
+                    changeBeginInput();
+                    return;
+                };
+            };
+            document.getElementById("edgeEndClick").onclick = function () {
+                _this.buttonFunc = function (text) {
+                    y.value = text;
+                    changeEndInput();
+                    return;
+                };
+            };
         };
         globalEditor.prototype.initHTML = function () {
+            var _this = this;
             document.getElementById("addVertex").addEventListener("click", function () { globalEditor.addVert = true; });
             document.getElementById("addEdge").addEventListener("click", function () { globalEditor.addEdge = true; });
             document.getElementById("tools")["style"].left = window.innerHeight + 20 + "px";
@@ -4198,6 +4246,48 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             document.getElementById("vertexSettings")["style"].left = window.innerHeight + 20 + "px";
             document.getElementById("edgeSettings")["style"].top = 110 + "px";
             document.getElementById("vertexSettings")["style"].top = 110 + "px";
+            var vcolor = document.getElementById("vertexColor");
+            vcolor.addEventListener("input", function () {
+                _this.curVertex.fill.fromHEX(vcolor.value);
+            }, false);
+            var vtext = document.getElementById("vertexText");
+            var changeName = function () {
+                if (vtext.value == _this.curVertex.text) {
+                    return;
+                }
+                console.log(vtext.value, _this.getName(vtext.value));
+                vtext.value = _this.getName(vtext.value);
+                _this.curVertex.text = vtext.value;
+            };
+            vtext.addEventListener("focusout", changeName);
+            vtext.addEventListener("keydown", function (evt) {
+                if (evt.keyCode == 13) {
+                    vtext.blur();
+                }
+            });
+            var e = document.getElementById("chooseElem");
+            e.addEventListener("click", function () {
+                _this.buttonFunc = function (elem) {
+                    if (!(elem instanceof Edge)) {
+                        var vertex = null;
+                        for (var i = 0; i < _this.circles.length; i++) {
+                            if (elem == _this.circles[i].text) {
+                                vertex = _this.circles[i];
+                                break;
+                            }
+                        }
+                        if (vertex == null) {
+                            return;
+                        }
+                        var e_1 = document.getElementById("vertexColor");
+                        _this.curVertex = vertex;
+                        e_1.value = vertex.fill.toHEX();
+                        e_1 = document.getElementById("vertexText");
+                        e_1.value = vertex.text;
+                        _this.changeSettingsMode(SettingsMode.Vertex);
+                    }
+                };
+            });
         };
         globalEditor.prototype.isInCanvas = function (mouseCoords) {
             if (document.getElementById("gameCanvas").clientLeft <= mouseCoords.x
@@ -4250,6 +4340,11 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
                 if (this.intersects(this.circles[i])) {
                     this.arrmove(this.circles, i, 0);
                     this.focused.state = true;
+                    if (this.buttonFunc != null) {
+                        this.buttonFunc(this.circles[0].text);
+                        this.buttonFunc = null;
+                    }
+                    this.curVertex = this.circles[0];
                     break;
                 }
             }

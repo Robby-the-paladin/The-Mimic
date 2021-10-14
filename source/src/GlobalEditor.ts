@@ -68,6 +68,20 @@ export class globalEditor {
     private static addVert = false;
     private static addEdge = false;
     private settingsMode = SettingsMode.None;
+    private buttonFunc = null;
+    private curVertex = null;
+    private getName(name : string, k = 0){
+        let n = name;
+        if (k != 0) {
+            n += "(" + k.toString() + ")";
+        } 
+        for (let i = 0; i < this.circles.length; i++) {
+            if (n == this.circles[i].text) {
+                return this.getName(name, k + 1);
+            }
+        }
+        return n;
+    }
 
     public circles: Vertex[];
     public edges: Edge[];
@@ -118,10 +132,16 @@ export class globalEditor {
 
     private addVertex() {       
         let pos = this.drawObj.transformBack(this.drawObj.cam.center);
-        this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex",
-            new Color(100, 100, 0), new Color(0, 0, 0)));
+        let vertex = new Vertex(pos.x, pos.y, 50, this.getName("New vertex"),
+        new Color(100, 100, 0), new Color(0, 0, 0));
+        this.circles.push(vertex);
         this.arrmove(this.circles, this.circles.length - 1, 0);
-
+        this.changeSettingsMode(SettingsMode.Vertex);
+        let e = document.getElementById("vertexColor") as HTMLInputElement;
+        this.curVertex = vertex;
+        e.value = vertex.fill.toHEX();
+        e = document.getElementById("vertexText") as HTMLInputElement;
+        e.value = vertex.text;
     }
 
     private addEdge() {
@@ -130,7 +150,6 @@ export class globalEditor {
         }
         let vertex = this.circles[0];
         let edge = new Edge(vertex, vertex);
-        console.log("pushing", edge);
         this.edges.push(edge);
         this.changeSettingsMode(SettingsMode.Edge);
         let x = document.getElementById("edgeBeginInput") as HTMLInputElement;
@@ -140,7 +159,6 @@ export class globalEditor {
 
         let changeBeginInput = () => {
             let newName = x.value;
-            console.log("change beg", newName);
             
             for(let i = 0; i < this.circles.length; i++) {
                 if (this.circles[i].text == newName) {
@@ -175,6 +193,22 @@ export class globalEditor {
                 y.blur();
             }
         });
+
+        document.getElementById("edgeBeginClick").onclick = () => {
+            this.buttonFunc = (text) => {
+                x.value = text;
+                changeBeginInput();
+                return;
+            }
+        };
+
+        document.getElementById("edgeEndClick").onclick = () => {
+            this.buttonFunc = (text) => {
+                y.value = text;
+                changeEndInput();
+                return;
+            }
+        };
     }
 
     public initHTML() {
@@ -187,6 +221,54 @@ export class globalEditor {
 
         document.getElementById("edgeSettings")["style"].top = 110 + "px";
         document.getElementById("vertexSettings")["style"].top = 110 + "px";
+
+        let vcolor = document.getElementById("vertexColor") as HTMLInputElement;
+        vcolor.addEventListener("input", () => {
+            this.curVertex.fill.fromHEX(vcolor.value);
+        }, false);
+
+        let vtext = document.getElementById("vertexText") as HTMLInputElement;
+
+        let changeName = () => {
+            if (vtext.value == this.curVertex.text) {
+                return;
+            }
+            console.log(vtext.value, this.getName(vtext.value));
+            
+            vtext.value = this.getName(vtext.value);
+            this.curVertex.text = vtext.value;
+        };
+
+        vtext.addEventListener("focusout", changeName);
+        vtext.addEventListener("keydown", (evt) => {
+            if (evt.keyCode == 13) {
+                vtext.blur();
+            }
+        });
+
+        let e = document.getElementById("chooseElem") as HTMLInputElement;
+        e.addEventListener("click", () => {
+            this.buttonFunc = (elem) => {
+                if (!(elem instanceof Edge)) {
+                    let vertex : Vertex = null;
+                    for (let i = 0; i < this.circles.length; i++) {
+                        if (elem == this.circles[i].text) {
+                            vertex = this.circles[i];
+                            break;
+                        }
+                    }
+                    if (vertex == null) {
+                        return;
+                    }
+                    let e = document.getElementById("vertexColor") as HTMLInputElement;
+                    this.curVertex = vertex;
+                    e.value = vertex.fill.toHEX();
+                    e = document.getElementById("vertexText") as HTMLInputElement;
+                    e.value = vertex.text;
+                    this.changeSettingsMode(SettingsMode.Vertex);
+                }
+            }
+        })
     }
 
     constructor(drawObj: Draw) {
@@ -275,6 +357,11 @@ export class globalEditor {
             if (this.intersects(this.circles[i])) {
                 this.arrmove(this.circles, i, 0);
                 this.focused.state = true;
+                if (this.buttonFunc != null) {
+                    this.buttonFunc(this.circles[0].text);
+                    this.buttonFunc = null;
+                }
+                this.curVertex = this.circles[0];
                 break;
             }
         }

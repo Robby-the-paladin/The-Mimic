@@ -4,18 +4,19 @@
 <div id="tools" class="toolsPad">
     <button id="addVertex">Add Vertex</button>
     <button id="addEdge">Add Edge</button>
+    <button id="chooseElem"><img src="textures\Editor\Cursors\cursor.png" height="13px" width="13px"></button>
 </div>
 <div id="edgeSettings" class="settings" style="visibility: hidden;">
-    <div id="edgeBegin">
-        <input type="text" id="edgeBeginInput" size="20">
-        <button id="edgeBeginClick"></button>
-    </div>
-</div>
-<div id="edgeEnd">
+    <input type="text" id="edgeBeginInput" size="20">
+    <button id="edgeBeginClick"><img src="textures\Editor\Cursors\cursor.png" height="13px" width="13px"></button>
     <input type="text" id="edgeEndInput" size="20">
-    <button id="edgeEndClick"></button>
+    <button id="edgeEndClick"><img src="textures\Editor\Cursors\cursor.png" height="13px" width="13px"></button>
 </div>
-<div id="vertexSettings" class="settings" style="visibility: hidden"></div>
+<div id="vertexSettings" class="settings" style="visibility: hidden">
+    <input type="color" id="vertexColor" name="Vertex color">
+    <input type="text" id="vertexText" size="20">
+    <button id="openLvl">Open Level</button>
+</div>
 <script src="require.js"></script>
 <script src="build/build.js"></script>
 <script>

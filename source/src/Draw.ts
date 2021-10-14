@@ -28,6 +28,21 @@ export class Color {
     public setAlpha(a: number): Color {
         return new Color(this.r, this.g, this.b, a);
     }
+
+    public toHEX(): string {
+        let HEX = (c: number) => {
+            let hex = c.toString(16);
+            return hex.length == 1 ? "0" + hex : hex;
+        }
+        return "#" + HEX(this.r) + HEX(this.g) + HEX(this.b);
+    }
+
+    public fromHEX(str: string) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(str);
+        this.r = parseInt(result[1], 16);
+        this.g = parseInt(result[2], 16);
+        this.b = parseInt(result[3], 16);
+    }
 }
 
 export enum Layer { // Индентификатор текстуры (тайл или персонаж)
@@ -79,7 +94,7 @@ export class Draw {
     private textqueue: textQueue[] = [];
     public cam = new Camera();
     private spriteAnimations: SpriteAnimation[] = [];
-    private static images: hashimages = { }; // Хеш таблица с изображениями
+    private static images: hashimages = {}; // Хеш таблица с изображениями
 
     constructor(canvas: HTMLCanvasElement, size: geom.Vector = null) {
         this.canvas = canvas;
@@ -139,7 +154,7 @@ export class Draw {
         align?: CanvasTextAlign, baseline?: CanvasTextBaseline, maxWidth?: number) {
         if (font == undefined) {
             font = "48px serif";
-        } 
+        }
         if (color == undefined) {
             color = new Color(255, 255, 255);
         }
@@ -196,21 +211,21 @@ export class Draw {
         this.ctx.globalAlpha = 1;
     }
     // Текст (обработка)
-    public text(text: string, pos: geom.Vector,  font?: string, color?: Color, outline?: boolean, outlineColor?: Color,
+    public text(text: string, pos: geom.Vector, font?: string, color?: Color, outline?: boolean, outlineColor?: Color,
         align?: CanvasTextAlign, baseline?: CanvasTextBaseline) {
-            let curelem: textQueue = {text, pos, font, color, outline, outlineColor, align, baseline};
-            this.textqueue.push(curelem);
+        let curelem: textQueue = { text, pos, font, color, outline, outlineColor, align, baseline };
+        this.textqueue.push(curelem);
     }
     // Изображение (обработка)
     public image(image: HTMLImageElement, pos: geom.Vector, box: geom.Vector, angle: number, layer: Layer, transparency = 1) {
-        if (layer == Layer.TileLayer ) { // Отрисовка сразу
+        if (layer == Layer.TileLayer) { // Отрисовка сразу
             this.drawimage(image, pos, box, angle, transparency);
         } else {
-            if ( Layer.HudLayer == layer) {// Отрисовка после сортировки
-                let curqueue: queue = { image, pos, box, angle, layer, transparency};
+            if (Layer.HudLayer == layer) {// Отрисовка после сортировки
+                let curqueue: queue = { image, pos, box, angle, layer, transparency };
                 this.imagequeueHud.push(curqueue);
             } else {
-                let curqueue: queue = { image, pos, box, angle, layer, transparency};
+                let curqueue: queue = { image, pos, box, angle, layer, transparency };
                 this.imagequeueEntity.push(curqueue);
             }
         }
@@ -240,7 +255,7 @@ export class Draw {
         this.ctx.globalAlpha = 1;
     }
     // Обработка слоев изображения
-    public getimage(curlevel : Level) {
+    public getimage(curlevel: Level) {
         if (this.imagequeueEntity.length > 0) { // Отрисовка изображений
             this.imagequeueEntity.sort(function (a, b) { // Сортировка
                 if (a.layer > b.layer)
@@ -300,10 +315,10 @@ export class Draw {
                 this.drawimage(temp.image, temp.pos, temp.box, temp.angle, temp.transparency);
             }
         }
-        for (; this.textqueue.length > 0; ) {
+        for (; this.textqueue.length > 0;) {
             let temp = this.textqueue.pop();
             this.drawText(temp.text, temp.pos, temp.font, temp.color, temp.outline,
-                 temp.outlineColor, temp.align, temp.baseline);   
+                temp.outlineColor, temp.align, temp.baseline);
         }
     }
     // Заполненный прямоугольник
@@ -375,9 +390,9 @@ export class Draw {
         let toy = end.y;
         this.ctx.moveTo(tox, toy);
         this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
-        this.ctx.moveTo(tox, toy);       
+        this.ctx.moveTo(tox, toy);
         this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
-        
+
         this.ctx.closePath();
         this.ctx.fillStyle = new Color(0, 0, 0).toString();
         this.ctx.strokeStyle = new Color(0, 255, 0).toString();
@@ -440,7 +455,7 @@ export class Draw {
         // Отрисовка
         this.spriteAnimations.forEach(animation => animation.display(this));
     }
-    
+
     public clear() {
         this.ctx.clearRect(-1000, -1000, 10000, 10000);
     }
