@@ -31,9 +31,11 @@ html,
     overflow-y: auto;
     background-color: darkgray;
     border: 3px solid black;
-    height: 700px;
+    height: 500px;
     width: 300px;
     border-radius: 5px;
+    display: flex;
+    flex: auto;    
 }
 
 body {

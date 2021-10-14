@@ -2947,11 +2947,9 @@ define("Draw", ["require", "exports", "Geom", "SpriteAnimation"], function (requ
             var toy = end.y;
             this.ctx.moveTo(tox, toy);
             this.ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
-            console.log(headlen);
             this.ctx.moveTo(tox, toy);
             this.ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
             this.ctx.closePath();
-            console.log(Math.cos(angle - Math.PI / 6), Math.cos(angle + Math.PI / 6), Math.sin(angle - Math.PI / 6), Math.sin(angle + Math.PI / 6));
             this.ctx.fillStyle = new Color(0, 0, 0).toString();
             this.ctx.strokeStyle = new Color(0, 255, 0).toString();
             this.ctx.stroke();
@@ -4046,7 +4044,13 @@ define("Editor", ["require", "exports", "Control", "Draw", "Level", "Geom", "Edi
 define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], function (require, exports, Draw_17, geom, Control_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.globalEditor = exports.Edge = exports.Vertex = void 0;
+    exports.globalEditor = exports.Edge = exports.Vertex = exports.SettingsMode = void 0;
+    var SettingsMode;
+    (function (SettingsMode) {
+        SettingsMode[SettingsMode["None"] = 0] = "None";
+        SettingsMode[SettingsMode["Edge"] = 1] = "Edge";
+        SettingsMode[SettingsMode["Vertex"] = 2] = "Vertex";
+    })(SettingsMode = exports.SettingsMode || (exports.SettingsMode = {}));
     var Vertex = (function () {
         function Vertex(x, y, r, text, fill, stroke) {
             this.startingAngle = 0;
@@ -4072,6 +4076,9 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.end = end;
         }
         Edge.prototype.draw = function (drawObj) {
+            if (this.begin.text == this.end.text) {
+                return;
+            }
             var fromx = this.begin.x;
             var fromy = this.begin.y;
             var dx = this.end.x - this.begin.x;
@@ -4086,6 +4093,7 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
     exports.Edge = Edge;
     var globalEditor = (function () {
         function globalEditor(drawObj) {
+            this.settingsMode = SettingsMode.None;
             this.c = document.getElementById("gameCanvas");
             this.ctx = this.c.getContext("2d");
             this.focused = {
@@ -4102,15 +4110,94 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             this.edges = [e2];
             this.initHTML();
         }
+        globalEditor.prototype.changeSettingsMode = function (mode) {
+            switch (this.settingsMode) {
+                case SettingsMode.Edge: {
+                    document.getElementById("edgeSettings")["style"].visibility = "hidden";
+                    break;
+                }
+                case SettingsMode.Vertex: {
+                    document.getElementById("vertexSettings")["style"].visibility = "hidden";
+                    break;
+                }
+                default:
+                    break;
+            }
+            switch (mode) {
+                case SettingsMode.Edge: {
+                    document.getElementById("edgeSettings")["style"].visibility = "visible";
+                    break;
+                }
+                case SettingsMode.Vertex: {
+                    document.getElementById("vertexSettings")["style"].visibility = "visible";
+                    break;
+                }
+                default:
+                    break;
+            }
+            this.settingsMode = mode;
+        };
         globalEditor.prototype.addVertex = function () {
-            console.log("vertex added");
             var pos = this.drawObj.transformBack(this.drawObj.cam.center);
             this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex", new Draw_17.Color(100, 100, 0), new Draw_17.Color(0, 0, 0)));
             this.arrmove(this.circles, this.circles.length - 1, 0);
         };
+        globalEditor.prototype.addEdge = function () {
+            var _this = this;
+            if (this.circles.length == 0) {
+                return;
+            }
+            var vertex = this.circles[0];
+            var edge = new Edge(vertex, vertex);
+            console.log("pushing", edge);
+            this.edges.push(edge);
+            this.changeSettingsMode(SettingsMode.Edge);
+            var x = document.getElementById("edgeBeginInput");
+            x.value = edge.begin.text;
+            var y = document.getElementById("edgeEndInput");
+            y.value = edge.end.text;
+            var changeBeginInput = function () {
+                var newName = x.value;
+                console.log("change beg", newName);
+                for (var i = 0; i < _this.circles.length; i++) {
+                    if (_this.circles[i].text == newName) {
+                        edge.begin = _this.circles[i];
+                        return;
+                    }
+                }
+                x.value = edge.begin.text;
+            };
+            x.addEventListener("focusout", changeBeginInput);
+            x.addEventListener("keydown", function (evt) {
+                if (evt.keyCode == 13) {
+                    x.blur();
+                }
+            });
+            var changeEndInput = function () {
+                var newName = y.value;
+                for (var i = 0; i < _this.circles.length; i++) {
+                    if (_this.circles[i].text == newName) {
+                        edge.end = _this.circles[i];
+                        return;
+                    }
+                }
+                y.value = edge.end.text;
+            };
+            y.addEventListener("focusout", changeEndInput);
+            y.addEventListener("keydown", function (evt) {
+                if (evt.keyCode == 13) {
+                    y.blur();
+                }
+            });
+        };
         globalEditor.prototype.initHTML = function () {
             document.getElementById("addVertex").addEventListener("click", function () { globalEditor.addVert = true; });
+            document.getElementById("addEdge").addEventListener("click", function () { globalEditor.addEdge = true; });
             document.getElementById("tools")["style"].left = window.innerHeight + 20 + "px";
+            document.getElementById("edgeSettings")["style"].left = window.innerHeight + 20 + "px";
+            document.getElementById("vertexSettings")["style"].left = window.innerHeight + 20 + "px";
+            document.getElementById("edgeSettings")["style"].top = 110 + "px";
+            document.getElementById("vertexSettings")["style"].top = 110 + "px";
         };
         globalEditor.prototype.isInCanvas = function (mouseCoords) {
             if (document.getElementById("gameCanvas").clientLeft <= mouseCoords.x
@@ -4177,6 +4264,10 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
                 globalEditor.addVert = false;
                 this.addVertex();
             }
+            if (globalEditor.addEdge) {
+                globalEditor.addEdge = false;
+                this.addEdge();
+            }
         };
         globalEditor.prototype.arrmove = function (arr, old_index, new_index) {
             if (new_index >= arr.length) {
@@ -4208,6 +4299,7 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
             };
         };
         globalEditor.addVert = false;
+        globalEditor.addEdge = false;
         return globalEditor;
     }());
     exports.globalEditor = globalEditor;
@@ -4215,13 +4307,36 @@ define("GlobalEditor", ["require", "exports", "Draw", "Geom", "Control"], functi
 define("LevelGraph", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Edge = void 0;
+    exports.Graph = exports.Edge = exports.Vertex = void 0;
+    var Vertex = (function () {
+        function Vertex(level) {
+            this.level = level;
+        }
+        return Vertex;
+    }());
+    exports.Vertex = Vertex;
     var Edge = (function () {
-        function Edge() {
+        function Edge(begin, end) {
+            this.begin = begin;
+            this.end = end;
         }
         return Edge;
     }());
     exports.Edge = Edge;
+    var Graph = (function () {
+        function Graph() {
+        }
+        Graph.prototype.addVertex = function (levelName, level) {
+            this.verticies.set(levelName, new Vertex(level));
+        };
+        Graph.prototype.addEdge = function (begName, endName) {
+            if (this.verticies[begName] != null && this.verticies[endName] != null) {
+                this.edges.push(new Edge(begName, endName));
+            }
+        };
+        return Graph;
+    }());
+    exports.Graph = Graph;
 });
 define("Main", ["require", "exports", "Geom", "AuxLib", "Draw", "Game", "Editor", "GlobalEditor"], function (require, exports, geom, aux, Draw_18, Game_11, Editor_1, GlobalEditor_1) {
     "use strict";

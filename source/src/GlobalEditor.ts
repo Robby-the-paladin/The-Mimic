@@ -2,6 +2,13 @@ import { Camera, Color, Draw } from "./Draw";
 import * as geom from "./Geom";
 import { Control } from "./Control";
 
+
+export enum SettingsMode {
+    None = 0,
+    Edge,
+    Vertex
+}
+
 // vertex Object
 export class Vertex {
     public startingAngle = 0;
@@ -42,6 +49,9 @@ export class Edge {
     }
 
     public draw(drawObj: Draw) {
+        if (this.begin.text == this.end.text) {
+            return;
+        }
         let fromx = this.begin.x;
         let fromy = this.begin.y;
         let dx = this.end.x - this.begin.x;
@@ -56,6 +66,8 @@ export class Edge {
 export class globalEditor {
     private mousePrev: geom.Vector;
     private static addVert = false;
+    private static addEdge = false;
+    private settingsMode = SettingsMode.None;
 
     public circles: Vertex[];
     public edges: Edge[];
@@ -76,19 +88,105 @@ export class globalEditor {
 
     public drawObj: Draw;
 
-    private addVertex() {
-        console.log("vertex added");
-        
+    public changeSettingsMode(mode : SettingsMode) {
+        switch(this.settingsMode) {
+            case SettingsMode.Edge: {
+                document.getElementById("edgeSettings")["style"].visibility = "hidden";
+                break;
+            }
+            case SettingsMode.Vertex: {
+                document.getElementById("vertexSettings")["style"].visibility = "hidden";
+                break;
+            }
+            default:
+                break;
+        }
+        switch(mode) {
+            case SettingsMode.Edge: {
+                document.getElementById("edgeSettings")["style"].visibility = "visible";
+                break;
+            }
+            case SettingsMode.Vertex: {
+                document.getElementById("vertexSettings")["style"].visibility = "visible";
+                break;
+            }
+            default:
+                break;
+        }
+        this.settingsMode = mode;
+    }
+
+    private addVertex() {       
         let pos = this.drawObj.transformBack(this.drawObj.cam.center);
         this.circles.push(new Vertex(pos.x, pos.y, 50, "New vertex",
             new Color(100, 100, 0), new Color(0, 0, 0)));
         this.arrmove(this.circles, this.circles.length - 1, 0);
+
+    }
+
+    private addEdge() {
+        if (this.circles.length == 0) {
+            return;
+        }
+        let vertex = this.circles[0];
+        let edge = new Edge(vertex, vertex);
+        console.log("pushing", edge);
+        this.edges.push(edge);
+        this.changeSettingsMode(SettingsMode.Edge);
+        let x = document.getElementById("edgeBeginInput") as HTMLInputElement;
+        x.value = edge.begin.text;
+        let y = document.getElementById("edgeEndInput") as HTMLInputElement; 
+        y.value = edge.end.text;
+
+        let changeBeginInput = () => {
+            let newName = x.value;
+            console.log("change beg", newName);
+            
+            for(let i = 0; i < this.circles.length; i++) {
+                if (this.circles[i].text == newName) {
+                    edge.begin = this.circles[i];
+                    return;
+                }
+            }
+            x.value = edge.begin.text;
+        }
+
+        x.addEventListener("focusout", changeBeginInput);
+        x.addEventListener("keydown", (evt) => {
+            if (evt.keyCode == 13) {
+                x.blur();
+            }
+        });
+
+        let changeEndInput = () => {
+            let newName = y.value;
+            for(let i = 0; i < this.circles.length; i++) {
+                if (this.circles[i].text == newName) {
+                    edge.end = this.circles[i];
+                    return;
+                }
+            }
+            y.value = edge.end.text;
+        }
+
+        y.addEventListener("focusout", changeEndInput);
+        y.addEventListener("keydown", (evt) => {
+            if (evt.keyCode == 13) {
+                y.blur();
+            }
+        });
     }
 
     public initHTML() {
         document.getElementById("addVertex").addEventListener("click", () => { globalEditor.addVert = true });
+        document.getElementById("addEdge").addEventListener("click", () => { globalEditor.addEdge = true });
 
         document.getElementById("tools")["style"].left = window.innerHeight + 20 + "px";
+        document.getElementById("edgeSettings")["style"].left = window.innerHeight + 20 + "px";
+        document.getElementById("vertexSettings")["style"].left = window.innerHeight + 20 + "px";
+
+        document.getElementById("edgeSettings")["style"].top = 110 + "px";
+        document.getElementById("vertexSettings")["style"].top = 110 + "px";
     }
 
     constructor(drawObj: Draw) {
@@ -194,6 +292,11 @@ export class globalEditor {
         if (globalEditor.addVert) {
             globalEditor.addVert = false;
             this.addVertex();
+        }
+
+        if (globalEditor.addEdge) {
+            globalEditor.addEdge = false;
+            this.addEdge();
         }
     }
 
